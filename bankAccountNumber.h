@@ -19,9 +19,8 @@ void bankInformation() {
     for(int i = 0; i < 10; i++) {
             user[i].name = " ";
     user[i].account = 1000 + i;
-    user[i].balance = 1000;
+    user[i].balance = 1000 + rand()%(9001);
     user[i].securityCode = 1000 + rand()%(9001);
-    cout << user[i].securityCode << endl;
     }
 }
 
