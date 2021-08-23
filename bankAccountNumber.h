@@ -14,6 +14,7 @@ struct account
 
 account user[10];
 
+// creates account for  10 user
 void bankInformation() {
     for(int i = 0; i < 10; i++) {
             user[i].name = " ";
@@ -24,6 +25,8 @@ void bankInformation() {
     }
 }
 
+/* checks whether the customer have enough balance  and provided 
+correct security code and account Number to reserve a seat */
 bool accountCheck(float payement, int account, int securityCode ) {
      bool isExist = false;
     for(int i = 0; i < 10; i++)
