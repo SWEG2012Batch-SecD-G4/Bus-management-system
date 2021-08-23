@@ -29,7 +29,7 @@ reserve *resrvd_acc[100];
 
 // list of functions
 void list_cities(City *[]);
-void showBusInfo();
+void showBusInfo(); 
 void reserveSeat();
 float distance_calculator(int, int);
 bool bus_assignment(int, int, reserve *[]);
@@ -47,13 +47,12 @@ int resrv_counter = 0;
 
 int main()
 {
-    bankInformation(); // a function that calls Bank information of a customer;
-    destinationCity();
-    list_cities(Destination);
-    showBusInfo();
-    starting_city();
-    //reserveSeat();
-    first_ui();
+    bankInformation(); // a function that calls Bank information of a customer from bankAccountNumber.h library
+    destinationCity();  // calling destination city function from bus_city_info.h
+    list_cities(Destination);  // showing all cities and bus that travels there
+    showBusInfo();  //  showing individual bus information
+    starting_city();  // list of cities that customer can travel from
+    first_ui();      // first user interface of the program(home page)
 }
 
 // Home page of the software
@@ -141,6 +140,7 @@ int search_destination()
 
     for (int i = 0; i < 5; i++)
     {
+        // if the city the customer searches are on the destination name
         if (city_name == Destination[i]->dest_name)
         {
             cout << "Name: " << Destination[i]->dest_name << endl
@@ -164,6 +164,7 @@ int search_destination()
 // reserve seat
 void reserveSeat()
 {
+    // create a new reserve everytime this function is called
     resrvd_acc[resrv_counter] = new reserve;
 
     cout << "Enter Name: ";
@@ -176,6 +177,7 @@ void reserveSeat()
     int destination = travelling_city() - 1;
 
     // calculating distance between starting city and destination city;
+    // checks whether customer enters the same name at both destination and starting city
     if (startingPoint != destination)
     {
         // assign a city to customer information
@@ -194,7 +196,8 @@ void reserveSeat()
     cout << "Number of tickets: ";
     cin >> resrvd_acc[resrv_counter]->ticket_size;
 
-    // bus Assignment
+    // assigning bus to a customer 
+    // bus_assignment also checks if there's avaible seat 
     bool bus_available = bus_assignment(destination, resrv_counter, resrvd_acc);
     if (bus_available)
     {
@@ -218,6 +221,7 @@ void reserveSeat()
         if (confirm == 'y')
         {
             // check your payement information from banks
+            // if the customer have balance that allows him to reserve a seat success will be true.
             bool success = accountCheck(resrvd_acc[resrv_counter]->payement,
                                         resrvd_acc[resrv_counter]->accountNumber,
                                         resrvd_acc[resrv_counter]->securityNumber);
@@ -228,11 +232,19 @@ void reserveSeat()
                 resrv_counter++;
             }
             else
+            {   /* if customer does provide accountNumber that does not exist, 
+                    does not have enough balance in the account, and 
+                    haven't not provided correct security code, cancel the reservation
+                 */
+                
+                delete resrvd_acc[resrv_counter];
                 cout << "Transaction was not successful \n"
                      << "Please check your bank information \n";
+            }
         }
         else
         {
+            // if the customer do not want to continue cancle reservation
             delete resrvd_acc[resrv_counter];
             cout << "Request canceled \n";
         }
