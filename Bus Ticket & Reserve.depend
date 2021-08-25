@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1629781157 source:e:\github\test-1\c++ project\bus ticket & reserve\main.cpp
+	<iostream>
+	<math.h>
+	"Bus and Cities Data.h"
+
+1629779151 e:\github\test-1\c++ project\bus ticket & reserve\bus and cities data.h
+	<iostream>
+	<math.h>
+
+1629813653 source:e:\github\bus ticket & reserve\main.cpp
+	<iostream>
+	<math.h>
+	"Bus and Cities Data.h"
+
+1629812758 e:\github\bus ticket & reserve\bus and cities data.h
+	<iostream>
+
