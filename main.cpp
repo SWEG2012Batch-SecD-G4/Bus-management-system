@@ -22,6 +22,7 @@ struct reserve
     float travelling_distance;
     string resrvd_bus;
     string leaving_time;
+    int reservation_code;
     bool is_reserverd;
 };
 reserve *resrvd_acc[100];
@@ -41,7 +42,6 @@ int first_ui();
 int cust_first_ui();
 void respond_cust_request();
 int search_destination();
-
 // global Variables;
 int resrv_counter = 0;
 
@@ -138,27 +138,37 @@ int search_destination()
     string city_name;
     cin >> city_name;
 
+    int city_index;
+    bool found = false;
+    
     for (int i = 0; i < 5; i++)
-    {
         // if the city the customer searches are on the destination name
         if (city_name == Destination[i]->dest_name)
         {
-            cout << "Name: " << Destination[i]->dest_name << endl
-                 << "Distance from AA: " << Destination[i]->km_from_AA << endl
-                 << "Direction from AA: " << Destination[i]->direction << endl
+            city_index = i;
+            found = true;
+        } 
+        
+    if(found) {
+        cout << "Name: " << Destination[city_index]->dest_name << endl
+                 << "Distance from AA: " << Destination[city_index]->km_from_AA << endl
+                 << "Direction from AA: " << Destination[city_index]->direction << endl
                  << "Leaving Time: ";
             for (int j = 0; j < 2; j++)
             {
-                cout << Destination[i]->busDestInfo.leaving_time[j] << " ";
+                cout << Destination[city_index]->busDestInfo.leaving_time[city_index] << " ";
             }
 
             cout << "\nAvailable: ";
-            if (Destination[i]->busDestInfo.seatAvailble > 0)
+            if (Destination[city_index]->busDestInfo.seatAvailble > 0)
                 cout << "Yes\n";
             else
                 cout << "No\n";
-        } else cout << "No such city recorded on our database\n";
+    } else {
+        cout << "\n No such city found in our database\n";
     }
+
+
 }
 
 // reserve seat
@@ -229,6 +239,7 @@ void reserveSeat()
             {
                 resrvd_acc[resrv_counter]->resrvd_seat = 1 + resrv_counter;
                 receipt(resrv_counter);
+                resrvd_acc[resrv_counter]->reservation_code = 1000 + rand()%(9001);
                 resrv_counter++;
             }
             else
@@ -346,6 +357,8 @@ void receipt(int resrv_counter)
     cout << "Travel Info: From " << resrvd_acc[resrv_counter]->initial_city << " TO " << resrvd_acc[resrv_counter]->destination << endl;
     cout << "Date: "
          << "01-01-2021" << endl;
+    cout << "Reservation code: "
+         << resrvd_acc[resrv_counter]->reservation_code << endl;
     cout << endl;
     cout << "Description Quantity price/Quantity Total Price " << endl;
     cout << left << setw(10) << "Transport\t"
@@ -379,7 +392,8 @@ void list_cities(City *Destination[])
 void showBusInfo()
 {
     cout << "AS = Available seat \n";
-    cout << "Bus code | Destination | number of buses | Bus 1 AS | Leaving Time | Bus2 AS | Leaving Time \n";
+    cout << "Bus code | Destination | number of buses | "
+         << "Bus 1 AS | Leaving Time | Bus2 AS | Leaving Time \n";
 
     for (int i = 0; i < 5; i++)
     {
