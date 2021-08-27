@@ -258,18 +258,9 @@ float distance_calculator(int destination, int startingPoint)
     // if the two cities are on the same direction
     if (Destination[destination]->direction == startingCity[startingPoint]->direction)
     {
-        bool dist_check = Destination[destination]->km_from_AA >
+         distance_km = Destination[destination]->km_from_AA -
                           startingCity[startingPoint]->km_from_AA;
-        if (dist_check)
-        {
-            distance_km = (Destination[destination]->km_from_AA -
-                           startingCity[startingPoint]->km_from_AA);
-        }
-        else
-        {
-            distance_km = (startingCity[startingPoint]->km_from_AA -
-                           Destination[destination]->km_from_AA);
-        }
+        distance_km = (distance_km <0) ? ((-1) * distance_km) : distance_km;
     }
     else // if the two cities are on different direction;
     {
