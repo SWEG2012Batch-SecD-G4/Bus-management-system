@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <ctime>
 #include "bankAccountNumber.h"
 #include "bus_city_info.h"
 
@@ -26,34 +27,41 @@ struct reserve
 };
 reserve *resrvd_acc[100];
 
-
 // list of functions
 void list_cities(City *[]);
-void showBusInfo(); 
+void showBusInfo();
 void reserveSeat();
 float distance_calculator(int, int);
-bool bus_assignment(int, int, reserve *[]);
+bool bus_assignment(int, int, reserve *[], int);
+int change_leaving_time(int);
 float payement_calculator(int, reserve *[]);
 void confirm_resrv(int);
 void receipt(int);
+void show_all_reservation();
 
 int first_ui();
 int cust_first_ui();
 void respond_cust_request();
 int search_destination();
-void cancel_reservation(int cust_index1);
+void cancel_reservation(int);
+void modify_reservation(int);
 void see_reservation();
 // global Variables;
 int resrv_counter = 0;
 
+void date_time();
 int main()
 {
-    bankInformation(); // a function that calls Bank information of a customer from bankAccountNumber.h library
-    destinationCity();  // calling destination city function from bus_city_info.h
-    list_cities(Destination);  // showing all cities and bus that travels there
-    showBusInfo();  //  showing individual bus information
-    starting_city();  // list of cities that customer can travel from
-    first_ui();      // first user interface of the program(home page)
+    // random_number generator
+    random_generator(random1);
+    random_generator(random2);
+
+    bankInformation();        // a function that calls Bank information of a customer from bankAccountNumber.h library
+    destinationCity();        // calling destination city function from bus_city_info.h
+    list_cities(Destination); // showing all cities and bus that travels there
+    showBusInfo();            //  showing individual bus information
+    starting_city();          // list of cities that customer can travel from
+    first_ui();               // first user interface of the program(home page)
 }
 
 // Home page of the software
@@ -75,7 +83,7 @@ int first_ui()
             respond_cust_request();
             break;
         case 2:
-            // ticketer_page();
+            //ticketer_page();
             break;
         case 3:
             //administrator_page();
@@ -122,7 +130,7 @@ void respond_cust_request()
             see_reservation();
             break;
         case 4:
-            first_ui();
+            show_all_reservation();
             break;
 
         default:
@@ -141,35 +149,36 @@ int search_destination()
 
     int city_index;
     bool found = false;
-    
+
     for (int i = 0; i < 5; i++)
         // if the city the customer searches are on the destination name
         if (city_name == Destination[i]->dest_name)
         {
             city_index = i;
             found = true;
-        } 
-        
-    if(found) {
-        cout << "Name: " << Destination[city_index]->dest_name << endl
-                 << "Distance from AA: " << Destination[city_index]->km_from_AA << endl
-                 << "Direction from AA: " << Destination[city_index]->direction << endl
-                 << "Leaving Time: ";
-            for (int j = 0; j < 2; j++)
-            {
-                cout << Destination[city_index]->busDestInfo.leaving_time[city_index] << " ";
-            }
+        }
 
-            cout << "\nAvailable: ";
-            if (Destination[city_index]->busDestInfo.seatAvailble > 0)
-                cout << "Yes\n";
-            else
-                cout << "No\n";
-    } else {
+    if (found)
+    {
+        cout << "Name: " << Destination[city_index]->dest_name << endl
+             << "Distance from AA: " << Destination[city_index]->km_from_AA << endl
+             << "Direction from AA: " << Destination[city_index]->direction << endl
+             << "Leaving Time: ";
+        for (int j = 0; j < 2; j++)
+        {
+            cout << Destination[city_index]->busDestInfo.leaving_time[city_index] << " ";
+        }
+
+        cout << "\nAvailable: ";
+        if (Destination[city_index]->busDestInfo.seatAvailble > 0)
+            cout << "Yes\n";
+        else
+            cout << "No\n";
+    }
+    else
+    {
         cout << "\n No such city found in our database\n";
     }
-
-
 }
 
 // reserve seat
@@ -202,14 +211,23 @@ void reserveSeat()
 
     cout << "Choose Travelling option \n"
          << "[1] One Way \n"
-         << "[2] Return: ";
+         << "[2] Round Trip: ";
     cin >> resrvd_acc[resrv_counter]->return_oneWay;
     cout << "Number of tickets: ";
     cin >> resrvd_acc[resrv_counter]->ticket_size;
 
-    // assigning bus to a customer 
-    // bus_assignment also checks if there's avaible seat 
-    bool bus_available = bus_assignment(destination, resrv_counter, resrvd_acc);
+    // asking a customer for time of reservation
+    cout << "Leaving Time: \n";
+    for (int i = 0; i < 2; i++)
+    {
+        cout << "[" << i + 1 << "] " << l_time[i] << endl;
+    }
+    int l_time_choice;
+    cin >> l_time_choice;
+
+    // assigning bus to a customer
+    // bus_assignment also checks if there's avaible seat
+    bool bus_available = bus_assignment(destination, resrv_counter, resrvd_acc, (l_time_choice - 1));
     if (bus_available)
     {
         // Bank Account Information;
@@ -235,7 +253,7 @@ void reserveSeat()
             // if the customer have balance that allows him to reserve a seat success will be true.
             bool success = accountCheck(resrvd_acc[resrv_counter]->payement,
                                         resrvd_acc[resrv_counter]->accountNumber,
-                                        resrvd_acc[resrv_counter]->securityNumber);
+                                        resrvd_acc[resrv_counter]->securityNumber, true);
             if (success)
             {
                 resrvd_acc[resrv_counter]->resrvd_seat = 1 + resrv_counter;
@@ -244,11 +262,11 @@ void reserveSeat()
                 resrv_counter++;
             }
             else
-            {   /* if customer does provide accountNumber that does not exist, 
+            { /* if customer does provide accountNumber that does not exist, 
                     does not have enough balance in the account, and 
                     haven't not provided correct security code, cancel the reservation
                  */
-                
+
                 delete resrvd_acc[resrv_counter];
                 cout << "Transaction was not successful \n"
                      << "Please check your bank information \n";
@@ -270,9 +288,9 @@ float distance_calculator(int destination, int startingPoint)
     // if the two cities are on the same direction
     if (Destination[destination]->direction == startingCity[startingPoint]->direction)
     {
-         distance_km = Destination[destination]->km_from_AA -
-                          startingCity[startingPoint]->km_from_AA;
-        distance_km = (distance_km <0) ? ((-1) * distance_km) : distance_km;
+        distance_km = Destination[destination]->km_from_AA -
+                      startingCity[startingPoint]->km_from_AA;
+        distance_km = (distance_km < 0) ? ((-1) * distance_km) : distance_km;
     }
     else // if the two cities are on different direction;
     {
@@ -303,28 +321,64 @@ float distance_calculator(int destination, int startingPoint)
 }
 
 // assignning bus to a customer;
-bool bus_assignment(int destination, int resrv_counter, reserve *resrvd_acc[])
+bool bus_assignment(int d_num, int resrv_counter, reserve *resrvd_acc[], int l_choice)
 {
-    if (bus_rg[destination]->seatAvailble[0] > 0)
+    int time_changed;
+    bool seat_exist;
+
+    if (bus_rg[d_num]->seatAvailble[l_choice] > 0)
+        seat_exist = true;
+    // if time customer requests is not available
+    else
     {
-        resrvd_acc[resrv_counter]->resrvd_bus = bus_rg[destination]->bus_cd[0];
-        resrvd_acc[resrv_counter]->leaving_time = l_time[0];
-        bus_rg[destination]->seatAvailble[0]--;
-        return true;
+        time_changed = change_leaving_time(l_choice);
+        if (time_changed != l_choice)
+        {
+            seat_exist = true;
+            l_choice = time_changed;
+        }
+        else
+            seat_exist = false;
     }
-    else if ((bus_rg[destination]->seatAvailble[0] == 0) &&
-             bus_rg[destination]->seatAvailble[1] > 0)
+
+    if (seat_exist)
     {
-        resrvd_acc[resrv_counter]->resrvd_bus = bus_rg[destination]->bus_cd[1];
-        resrvd_acc[resrv_counter]->leaving_time = l_time[1];
-        bus_rg[destination]->seatAvailble[1]--;
+        resrvd_acc[resrv_counter]->resrvd_bus = bus_rg[d_num]->bus_cd[l_choice];
+        resrvd_acc[resrv_counter]->leaving_time = l_time[l_choice];
+        bus_rg[d_num]->seatAvailble[l_choice]--;
+
         return true;
     }
     else
-    {
-        cout << "NO available seat \n";
         return false;
+}
+
+// if bus is not available at requested time
+int change_leaving_time(int l_choice)
+{
+
+    char change;
+    int time_index;
+
+    cout << "NO seat available at " << l_time[l_choice] << "\n";
+    for (int i = 0; i < 2; i++)
+        if ((i != l_choice) && (bus_rg[i]->seatAvailble > 0))
+        {
+            cout << "Would you like to change time to: " << l_time[i];
+            time_index = i;
+        }
+    cout << (" y/n") << endl;
+
+    cin >> change;
+    change = tolower(change);
+
+    // if the customer changes time return the time index;
+    if (change == 'y')
+    {
+        return time_index;
     }
+    else
+        return l_choice;
 }
 
 // calculating payement;
@@ -348,16 +402,28 @@ void confirm_resrv(int i)
     cout << "Total payment : " << resrvd_acc[i]->payement << endl;
 }
 
+void date_time()
+{
+    std::time_t t = std::time(0); // get time now
+    std::tm *now = std::localtime(&t);
+    std::cout << (now->tm_year + 1900) << '-'
+              << (now->tm_mon + 1) << '-'
+              << now->tm_mday
+              << "\n";
+}
+
 // printing receipt after confirming the transaction;
 void receipt(int resrv_counter)
 {
-    system("cls");
+    //system("cls");
     cout << right << setw(50) << "Bus X Transport Service\n";
     cout << "Receipt Number: " << resrvd_acc[resrv_counter]->resrvd_seat << endl;
     cout << "Prepared for: " << resrvd_acc[resrv_counter]->fname << endl;
     cout << "Travel Info: From " << resrvd_acc[resrv_counter]->initial_city << " TO " << resrvd_acc[resrv_counter]->destination << endl;
-    cout << "Date: "
-         << "01-01-2021" << endl;
+    cout << "Leaving Time: " << resrvd_acc[resrv_counter]->leaving_time << endl;
+    cout << "Date: ";
+    date_time();
+    cout << endl;
     cout << endl;
     cout << "Description Quantity price/Quantity Total Price " << endl;
     cout << left << setw(10) << "Transport\t"
@@ -366,10 +432,6 @@ void receipt(int resrv_counter)
          << left << setw(10) << resrvd_acc[resrv_counter]->payement << endl;
 }
 
-// show customer his/her reservation
-void show_cust_reservation() {
-
-}
 // shows list of  cities
 void list_cities(City *Destination[])
 {
@@ -396,7 +458,7 @@ void showBusInfo()
 
     for (int i = 0; i < 5; i++)
     {
-        cout << " " << left << setw(10) << setfill(' ') 
+        cout << " " << left << setw(10) << setfill(' ')
              << bus_rg[i]->bus_dest_cd << "  "
              << left << setw(10) << Destination[i]->dest_name << "\t\t"
              << left << setw(10) << 2 << "   ";
@@ -410,20 +472,28 @@ void showBusInfo()
     }
 }
 
-void cancel_reservation(int cust_index) {
-    for(int i = cust_index; i < resrv_counter; i++) {
-        resrvd_acc[i] = resrvd_acc[i + 1];
+// void shows all reservation
+void show_all_reservation()
+{
+    cout << "Number of resrvation: " << resrv_counter << endl;
+    for (int i = 0; i < resrv_counter; i++)
+    {
+        cout << "Name " << resrvd_acc[i]->fname << endl;
     }
-    delete resrvd_acc[resrv_counter];
-    resrv_counter--;
+    show_bank_information();
+    cout << endl;
 }
-void see_reservation() {
+
+void see_reservation()
+{
     cout << "Enter name: ";
     string name;
     cin >> name;
-    for(int i = 0; i < resrv_counter; i++)  {
-        if(name == resrvd_acc[i]->fname) {
-            receipt(i); // shows customer his reservation;
+    for (int index = 0; index < resrv_counter; index++)
+    {
+        if (name == resrvd_acc[index]->fname)
+        {
+            receipt(index); // shows customer his reservation;
 
             cout << "[1] To cancel reservation \n"
                  << "[2] To change reservation \n";
@@ -433,13 +503,76 @@ void see_reservation() {
             {
             case 1:
                 // put a condition that checks the customer elligibility for cancelling reservation
-                cancel_reservation(i);
+                cancel_reservation(index);
                 cout << "Total Number of people reserved a seat is  " << resrv_counter << endl;
                 break;
-            
+            case 2:
+                modify_reservation(index);
+                break;
             default:
                 break;
             }
+        }
+    }
+}
+
+// cancel reservation: can be used to make  cancel all the reservation;
+void cancel_reservation(int cust_index)
+{
+    //give the customer is money back;
+    bool isMoney_back = accountCheck(resrvd_acc[cust_index]->payement,
+                                     resrvd_acc[cust_index]->accountNumber,
+                                     resrvd_acc[cust_index]->securityNumber, false);
+    // deleting the reservation from system
+    for (int i = cust_index; i < resrv_counter; i++)
+    {
+        resrvd_acc[i] = resrvd_acc[i + 1];
+    }
+    delete resrvd_acc[resrv_counter];
+    resrv_counter--;
+}
+
+// modifying reservation
+void modify_reservation(int cust_index)
+{
+    cout << "You can change the following information in your booking \n"
+         << "[1] Your name \n"
+         << "[2] Leaving Time: \n"
+         << "[3] To Finish\n"
+         << "[3] To Go back" << endl;
+
+    bool do_not_exit = true;
+    while (do_not_exit)
+    {
+        int option;
+        cin >> option;
+
+        switch (option)
+        {
+        case 1:
+        {
+            cout << "Enter your new name: ";
+            cin >> resrvd_acc[cust_index]->fname;
+            break;
+        }
+        case 2:
+        {
+            cout << "Leaving Time: \n";
+            for (int i = 0; i < 2; i++)
+                cout << "[" << i + 1 << "] " << l_time[i] << endl;
+            int l_time_choice;
+            cin >> l_time_choice;
+
+            // Not the best way to do it, but for now
+            resrvd_acc[cust_index]->leaving_time = l_time[l_time_choice - 1];
+            break;
+        }
+        case 3:
+            receipt(cust_index);
+            break;
+        default:
+            do_not_exit = false;
+            break;
         }
     }
 }
