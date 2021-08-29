@@ -91,7 +91,8 @@ The main function of the program should be included here and all other functions
 #### 3.6 create a function that allows the customer/ticketer/administrator searches for cities
 #### 3.7 create a function that allows ticketer/customer to reserve a seat called reserve();
     customer/ticketer shoul provide names, cities travelling to and from, type of travelling, age, preferred leaving time. 
-    After receiving the above information from the customer/ticketer the function should ask for confirmation by providing bank account number and security code. call a function that calculates distance.
+    After receiving the above information from the customer/ticketer the function should ask for confirmation by providing bank account number and security code. 
+    call a function that calculates distance.
 
 #### 3.8 create a function that calculates distance
     Based on the cities customer/ticketer provided calculate a distance.
