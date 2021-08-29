@@ -23,6 +23,19 @@ The admisnistrator section includes the following functionality
 2. Generating reports
 3. Overal administrator of the system
 
+## functional requirements of the program
+  #1. library that manages the customer bank account, security code and balance;
+  
+#Description: 
+#When customer makes reservation  the program, asks the customer for his/her bank account number and security code. Based on the account number  and security code provided the transaction takes place. If customer provides a correct information, the program reduces the payement calculated for the reservation from his/her bank account. In case customer #cancels reseravation after (money reduced from his bank account), this library returns money back into a customer's bank account.
+
+        # functionalities of this library
+            #1.1 creating bank Account for N number of customer(in our case 10)
+                 Each customer have account number starting from 1000 + their position, and randomly generated balance and security code between 1000 and 10000
+            #1.2 a function that makes transaction happen
+                This function takes 4 parameters, these parameters are how much money to be paid, account number, security code of the account number and boolean information that  tells whether the customer is reserving a seat or cancelling a reservation. After taking parameters from the main program when customer makes reservation or cancels this function first checks if the account number and security code provided are correct and found in database. After that it makes transaction provided                     during the paramtere passing(canceling or reserving seat). In case of reserving a seat, this funcions reduces payement from customer bank account. If customer wants to cancel his reservation, the money should be give back.
+
+
 Note: Creating default destination city is useful.
 default destination city and bus prevents the admnistrator providing destination city and buses before the customer starts to reserve a seat.
 
