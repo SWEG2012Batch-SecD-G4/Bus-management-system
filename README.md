@@ -23,30 +23,36 @@ The admisnistrator section includes the following functionality
 2. Generating reports
 3. Overal administrator of the system
 
-# functional requirements of the program
-  ## 1. library that manages the customer bank account, security code and balance;
+# Functional requirements of the program
+  ## 1. Library that manages the customer bank account, security code and balance;
   
-#Description: 
-#When customer makes reservation  the program, asks the customer for his/her bank account number and security code. Based on the account number  and security code provided the transaction takes place. If customer provides a correct information, the program reduces the payement calculated for the reservation from his/her bank account. In case customer #cancels reseravation after (money reduced from his bank account), this library returns money back into a customer's bank account.
+Description: 
+When customer makes reservation  the program, asks the customer for his/her bank account number and security code. 
+Based on the account number  and security code provided the transaction takes place. If customer provides a correct information, the program reduces the payement calculated for the reservation from his/her bank account. 
+In case customer #cancels reseravation after (money reduced from his bank account), this library returns money back into a customer's bank account.
 
-### functionalities of this library
-##### 1.1 creating bank Account for N number of customer(in our case 10)
+### Functionalities of this library
+##### 1.1 Creating bank Account for N number of customer(in our case 10)
             Each customer have account number starting from 1000 + their position, and randomly generated balance and security code between 1000 and 10000
-##### 1.2 a function that makes transaction happen
+##### 1.2 Creating a function that makes transaction happen
             This function takes 4 parameters, these parameters are how much money to be paid, account number, security code of the accountnumber and boolean information that  tells whether the customer is reserving a seat or cancelling a reservation. 
             After taking parameters from the main program when customer makes reservation or cancels this function first checks if the account number and security code provided are correct and found in database. 
-            After that it makes transaction provided during the paramtere passing(canceling or reserving seat). In case of reserving a seat, this funcions reduces payement from customer bank account. 
+            After that it makes transaction provided during the paramtere passing(canceling or reserving seat). 
+            In case of reserving a seat, this funcions reduces payement from customer bank account. 
             If customer wants to cancel his reservation, the money should be give back.
 
   ## 2. library that manages the cities and buses 
-# Description:
+Description:
 The program ammends buses to cities. Example, if we have 4 buses and 2 cities A and B, the first two buses will be given to the city A,  and the last two will be given to the other city B. These  2 buses that will travel to A, will have a bus destination code 100 as collective, and 100A and 100B individually. The individual buses under the same destination city is identified by bus code + letter. Each buses may have their own seats and leaving time. 
 
-    # functionalities of this library
-        #2.1 Adding  initial city and buses information(default city and buses)
-
+### Functionalities of this library
+#### 2.1 Adding  initial city and buses information(default city and buses)
+        create struct named Bus hat hold bus information such as bus destination code, number of buses, leaving time and number of seat available for each buses.
+        create struct named City that holds information about city like, city_name, distance from AA, direction from AA, and finally nested structure that appends bus information to each city.
+        
 Note: Creating default city and buses is useful.
-default destination city and bus prevents the admnistrator providing destination city and buses before the customer starts to reserve a seat.
+Default city and bus prevents the admnistrator providing  city and buses information every time the program execution starts.
+#### 2.2 
 
 # How to create a defualt destination city and buses?
 bus_city_info.h library is built for this purposes.
