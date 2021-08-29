@@ -81,7 +81,7 @@ The main function of the program should be included here and all other functions
     Important libraries that should be included in this program are iostream, string, iomanip, cstdlib, cmath, ctime,and both user defined libraries bus_city_info.h and bankAccountNumber.h.
 
 #### 3.2 Creating a structure that holds reservation information
-    create struct named reserve that holds the customer's name, destination city, initial_city, payement, accountNumber, securityNumber, reserved seat, ticket size, return type, travelling distance, reserved bus leaving time, and age.
+create struct named reserve that holds the customer's name, destination city, initial_city, payement, accountNumber, securityNumber, reserved seat, ticket size, return type, travelling distance, reserved bus leaving time, and age.
 
 #### 3.3 call the neccessary functions from both libraries that we have included
 
