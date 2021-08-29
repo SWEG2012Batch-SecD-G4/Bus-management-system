@@ -59,7 +59,8 @@ bus_city_info.h library is built for this purposes.
 it enables the user to reserve a seat and search for destination city before the administrator section of the program adding city and buses to the program
 
 #### 2.2 Adding/removing cities from travelling cities list
-    A new city is added to the lists of cities by creating a function that adds new city to structure dynamically using pointer new operator. Administrator should provide name of the city, distance of the city from AA, and direction of the city from AA.
+    A new city is added to the lists of cities by creating a function that adds new city to structure dynamically using pointer new operator. 
+    Administrator should provide name of the city, distance of the city from AA, and direction of the city from AA.
     Bus will be ammended to the city at the instance new city is added by the administrator.
 
     Another function removes cities from the list.
@@ -78,14 +79,44 @@ The main function of the program should be included here and all other functions
 
 ### functional requirements of this program
 #### 3.1 including all necessary libraries
-    Important libraries that should be included in this program are iostream, string, iomanip, cstdlib, cmath,<br /> ctime,and both user defined libraries bus_city_info.h and bankAccountNumber.h.
+    Important libraries that should be included in this program are iostream, string, iomanip, cstdlib, cmath, ctime,and both user defined libraries bus_city_info.h and bankAccountNumber.h.
 
 #### 3.2 Creating a structure that holds reservation information
     create struct named reserve that holds the customer's name, destination city, initial_city,  
-    
-    
-    payement   accountNumber, securityNumber, reserved seat, ticket size, return type, travelling distance, reserved bus leaving time, and age.
+    payement accountNumber, securityNumber, reserved seat, ticket size, return type, travelling distance, reserved bus leaving time, and age.
 
 #### 3.3 call the neccessary functions from both libraries that we have included
+#### 3.4 create a function that shows homepage
+#### 3.5 create a function that responds to requests from customer/ticketer and administrator
+#### 3.6 create a function that allows the customer/ticketer/administrator searches for cities
+#### 3.7 create a function that allows ticketer/customer to reserve a seat called reserve();
+    customer/ticketer shoul provide names, cities travelling to and from, type of travelling, age, preferred leaving time. 
+    After receiving the above information from the customer/ticketer the function should ask for confirmation by providing bank account number and security code. call a function that calculates distance.
 
+#### 3.8 create a function that calculates distance
+    Based on the cities customer/ticketer provided calculate a distance.
+    Algorithm for calculating distance.
+    Every Cities have distance and direction from central(Addis Ababa).
+    step 1: check whether both cities are on the same direction or not.
+    step 2: if both cites are on the same direction, the distance will be the difference between them.
+    step 3: if both cities are on different direction, check whether customer prefers direct way from starting to destination or through a central city
+    step 4: if customer prefers direct way, distance will be calculated by hypothenus formula.
+    step 5: if customer prefers to go through central, add two cities distance from central together.
+    step 6: return distance to reservation function, so that payement is calculated.
+
+#### 3.9 In the reserve() function call a function that calculates payement
+#### 3.10 create a function that calculates payement called payement_calculator()
+    Payement is calculated based on the distance returned from distance_calculator() and price per kilometer.
+    calculate payement and return total payement
+
+#### 3.11 create a function that asks the customer/ticketer for confirmation of his/her reservation by showing his reservation information including payement
+#### 3.12 If customer confirms reservation call a function from bankAccountNumber.h library to perform transaction
+    this function should return status of transaction.
+    if status of transaction is okay, call a function that prints receipt and reserves actual seat.
+    Assign bus too.
+    else delete reservation transaction.
+
+#### 3.13 creat a function that assignes bus to customer based on infrmation provided
+#### 3.14 create a function that prints receipt in a tabular form
+#### 3.15
 ###### to be continued
