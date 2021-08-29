@@ -1,5 +1,5 @@
 # Bus-Ticketing and reservation management
-# Sections of the program
+## Sections of the program
 The program has three main sections
 ##    1. The customer sections
 The functionality of the customer pages are
@@ -37,7 +37,9 @@ In case customer #cancels reseravation after (money reduced from his bank accoun
             Each customer have account number starting from 1000 + their position, and randomly generated balance and security code between 1000 and 10000
 ##### 1.2 Creating a function that makes transaction happen
             This function takes 4 parameters, these parameters are how much money to be paid, account number, security code of the accountnumber and boolean information that  tells whether the customer is reserving a seat or cancelling a reservation. 
+
             After taking parameters from the main program when customer makes reservation or cancels this function first checks if the account number and security code provided are correct and found in database. 
+            
             After that it makes transaction provided during the paramtere passing(canceling or reserving seat). 
             In case of reserving a seat, this funcions reduces payement from customer bank account. 
             If customer wants to cancel his reservation, the money should be give back.
