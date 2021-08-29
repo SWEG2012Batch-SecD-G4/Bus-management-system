@@ -3,6 +3,7 @@
 
 using namespace std;
 
+// bus iformation container
 struct Bus
 {
     int bus_dest_cd;
@@ -12,57 +13,56 @@ struct Bus
 };
 Bus *bus_rg[100];
 
+// city information container
 struct City
 {
-    string dest_name;
+    string city_name;
     float km_from_AA;
     string direction;
     Bus busDestInfo;
 };
-City *Destination[100], *startingCity[100];
+City *cities_info[100];
+
+// login informatino container
+struct login
+{
+    string id, password;
+};
+login *login_create[5];
 
 // variables
-int counter = 0;
-    int number_buses = 10;
-    int number_dest = 5;
+int cityNo_count = 0;
+int number_buses = 10;
+int number_dest = 5;
 
-// initial_destination city and km
+// list of initial cities city and km
 string city[5] = {"Jimma", "Nakemte", "Bahirdar", "Gambela", "Makelle"};
 float distance_AA[5] = {25, 50, 100, 30, 10};
 string direction_AA[5] = {"North", "South", "West", "East", "North"};
 string l_time[4] = {"12:00 AM", "6:00 AM", "12:00 PM", "6:00 PM"};
 
-// list of destination city
-int travelling_city()
-{
-    int city_choice;
-    for (int i = 0; i < 5; i++)
-    {
-        cout << "[" << i + 1 << "] " << city[i] << endl;
-    }
-    cin >> city_choice;
-    return city_choice;
-}
+// initial login information for ticketer and administrator
+string initial_login[][2] = {{"admin", "password"}, {"ticketer", "password"}};
 
-// returns structure
+
+// ammending bus information
+int bus_dest_count;
 Bus bus_info()
 {
-    // bus_rg[counter] = new Bus;
-    int value = 0;
-    bus_rg[counter] = new Bus;
-    bus_rg[counter]->bus_dest_cd = 100 + counter;
+    bus_rg[bus_dest_count] = new Bus;
+    bus_rg[bus_dest_count]->bus_dest_cd = 100 + bus_dest_count;
     int dest_per_bus = number_buses / number_dest;
 
     for (int i = 0; i < dest_per_bus; i++)
     {
         char code = 65;
         code += i;
-        bus_rg[counter]->bus_cd[i] = to_string(bus_rg[counter]->bus_dest_cd) + code;
-        bus_rg[counter]->leaving_time[i] = l_time[i];
-        bus_rg[counter]->seatAvailble[i] = 100;
+        bus_rg[bus_dest_count]->bus_cd[i] = to_string(bus_rg[bus_dest_count]->bus_dest_cd) + code;
+        bus_rg[bus_dest_count]->leaving_time[i] = l_time[i];
+        bus_rg[bus_dest_count]->seatAvailble[i] = 100;
     }
 
-    return *bus_rg[counter];
+    return *bus_rg[bus_dest_count];
 }
 
 // create  destination city;
@@ -71,23 +71,84 @@ void destinationCity()
 
     for (int i = 0; i < 5; i++)
     {
-        Destination[counter] = new City;
-        Destination[counter]->dest_name = city[i];
-        Destination[counter]->km_from_AA = distance_AA[i];
-        Destination[counter]->direction = direction_AA[i];
-        Destination[counter]->busDestInfo = bus_info();
-        counter++;
+        cities_info[cityNo_count] = new City;
+        cities_info[cityNo_count]->city_name = city[i];
+        cities_info[cityNo_count]->km_from_AA = distance_AA[i];
+        cities_info[cityNo_count]->direction = direction_AA[i];
+        cities_info[cityNo_count]->busDestInfo = bus_info();
+        cityNo_count++;
+        bus_dest_count++;
     }
 }
 
-// create initial starting city
-void starting_city()
+// list of destination city
+int travelling_city()
 {
-    for (int i = 0; i < 5; i++)
+    int city_choice;
+    for (int i = 0; i < cityNo_count; i++)
     {
-        startingCity[i] = new City;
-        startingCity[i]->dest_name = city[i];
-        startingCity[i]->km_from_AA = distance_AA[i];
-        startingCity[i]->direction = direction_AA[i];
+        cout << "[" << i + 1 << "] " << cities_info[i]->city_name << endl;
+    }
+    cin >> city_choice;
+    return city_choice;
+}
+
+// Access granting
+int num_access;
+
+void login_info()
+{
+    for (int i = 0; i < 2; i++)
+    {
+        login_create[num_access] = new login;
+        login_create[num_access]->id = initial_login[i][0];
+        login_create[num_access]->password = initial_login[i][1];
+        num_access++;
+    }
+}
+
+// add/remove destination city
+void add_city()
+{
+    cities_info[cityNo_count] = new City;
+    cout << "Enter name of new city: ";
+    cin >> cities_info[cityNo_count]->city_name;
+    cout << "Enter city distance in km from AA: ";
+    cin >> cities_info[cityNo_count]->km_from_AA;
+    cout << "Enter city direction from AA: ";
+    cin >> cities_info[cityNo_count]->direction;
+
+    // appending bus information
+    cities_info[cityNo_count]->busDestInfo = bus_info();
+    cityNo_count++;
+}
+
+// removing city from lists
+void remove_city()
+{
+
+    string city_rmv;
+    int city_rmv_index;
+    bool found_city = false;
+
+    cout << "Enter a city Name to be removed: ";
+    cin >> city_rmv;
+
+    for (int i = 0; i < cityNo_count; i++)
+    {
+        if (city_rmv == cities_info[i]->city_name)
+        {
+            city_rmv_index = i;
+            found_city = true;
+        }
+    }
+
+    if (found_city)
+    {
+        for (int i = city_rmv_index; i < cityNo_count; i++)
+            cities_info[i] = cities_info[i + 1];
+
+        delete cities_info[cityNo_count];
+        cityNo_count--;
     }
 }
