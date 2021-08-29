@@ -65,7 +65,7 @@ Bus bus_info()
     return *bus_rg[bus_dest_count];
 }
 
-// create  destination city;
+// create initial destination city;
 void destinationCity()
 {
 
@@ -81,7 +81,7 @@ void destinationCity()
     }
 }
 
-// list of destination city
+// list of  cities
 int travelling_city()
 {
     int city_choice;
