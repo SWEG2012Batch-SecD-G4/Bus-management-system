@@ -46,17 +46,21 @@ int search_destination();
 void cancel_reservation(int);
 void modify_reservation(int);
 void see_reservation();
+
 // global Variables;
 int resrv_counter = 0;
 
 void date_time();
+
 //login page information
 bool login_page(int);
 bool login_success(int start, int end, string id, string password);
+
 // administrator functions
 void respond_admin_request(int);
 void add_city();
 void remove_city();
+
 int main()
 {
     // random_number generator
@@ -249,13 +253,12 @@ void reserveSeat()
         // confirm payement and reservation;
         confirm_resrv(resrv_counter);
         cout << "Do you want to continue \n (Y\\N)";
-        char confirm;
-        cin >> confirm;
+        char confirm; cin >> confirm;
         confirm = tolower(confirm);
 
         if (confirm == 'y')
         {
-            // check your payement information from banks
+            // check the payement information from banks
             // if the customer have balance that allows him to reserve a seat success will be true.
             bool success = accountCheck(resrvd_acc[resrv_counter]->payement,
                                         resrvd_acc[resrv_counter]->accountNumber,
@@ -308,17 +311,13 @@ float distance_calculator(int destination, int startingPoint)
         switch (option)
         {
         case 1:
-        {
             distance_km = (cities_info[destination]->km_from_AA +
                            cities_info[startingPoint]->km_from_AA);
             break;
-        }
         case 2:
-        {
             distance_km = sqrt(pow(cities_info[destination]->km_from_AA, 2) +
                                pow(cities_info[startingPoint]->km_from_AA, 2));
             break;
-        }
         default:
             break;
         }
