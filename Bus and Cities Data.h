@@ -13,6 +13,7 @@ struct Person{
     int age;
     string initialCity;
     string destinationCity;
+    string update;
 
 };
 
@@ -27,6 +28,14 @@ struct Bank{
     float balance;
     int securityCode;
 
+};
+
+struct Ticket{
+    int ticketNum;
+    string name;
+    int id,age;
+    string initialCity, destinationCity, eligibility;
+    float dist, cost, remBalance;
 };
 
 
