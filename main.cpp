@@ -19,12 +19,8 @@ int busn,dtym,tseat,fair,s;
 
 void bus::install(void)
 {
-	cout.setf(ios::right,ios::adjustfield);
-	cout.width(15);
 cout<<"Enter Bus No:";
 cin>>busn;
-	cout.setf(ios::right,ios::adjustfield);
-	cout.width(15);
 cout<<"\nFrom: ";
 cin>>from;
 cout<<"\nTo: ";
@@ -107,15 +103,7 @@ fair=300*s;
 fair=fair+(fair*.7);
 allsell=allsell+fair;
 cout<<"Total Fair(with 7%vat): ";
-
-cout.setf(ios::showpoint);
-cout.precision(3);
-cout.setf(ios::fixed,ios::floatfield);
-cout.width(8);
 cout<<fair<<endl;
-
-cout.setf(ios::right,ios::adjustfield);
-	cout.width(30);
 cout<<"Thank You"<<endl<<endl;
 
 			}
@@ -161,3 +149,4 @@ break;
 }
 return 0;
 }
+
