@@ -5,6 +5,7 @@ using namespace std;
 void dest();
 int cal_distance(int ,int);
 void dest_code(int m);
+void criminality();
 int check(int n,int t);
 void paid(int price,int key);
 void reciet(int n,int m,int t);
@@ -47,15 +48,19 @@ string reservation[3];
 destination des={{"Jimma","Adama","Mekele","Gonder","Hawassa"},{430,100,540,350,250}};
 };
 customer user[500];
-int acount()
+
+void criminality(string name)
 {
 
-   for(int i=0;i<100;i++)
-   {
-       acount_user[i].acount_num=1000+ rand()%999;
-       acount_user[i].balance=10000+rand()&100;
-   }
-  return acount_user[counter].acount_num;
+    string crime[20]={"abebe kebede","abel kebed","jafar husen","lawrence jhon ","ismael abera","birhanu alemu","kebede chukala","hawe dawit","dory gana","chris mack","charles evans","israel tewdrows","Kirubel seifu","esubalew abebe","Asabnesh mogese","dagim moges","boru biratu","jerard  jigsaw","keti wondewson","biscute dagim"};
+    for(int i=0;i<20;i++)
+    {
+        if(name==crime[i])
+        {
+            cout<<"Sorry we are not give a service ,good day"<<endl;
+            exit('a');
+        }
+    }
 }
 void paid(int price,int key)
 {
@@ -67,12 +72,18 @@ void paid(int price,int key)
     {
     cout<<"Welcome to  the transportation service "<<endl;
     cout<<"Do you like to continue y/n "<<endl;
-             int total_price=acount_user[i].balance-price;
-             cout<<"Than for your using us: "<<endl;
-
-
+    char choice;
+    cin>>choice;
+    if(choice=='y'||choice=='Y'){
+        int total_price=user[counter].balance-price;
+        cout<<"The payment is succeeded "<<endl;
+        cout<<"Your current balance is "<<total_price;
     }
-    }
+    else if(choice=='n'||choice=='N'){
+             cout<<"Thanks for your using us: "<<endl;
+            return;
+      }
+      }
     else{
 
         cout<<"\nTry again"<<endl;
@@ -118,6 +129,7 @@ void create()
     cout<<"Name: ";getline(cin,user[counter].name);
     cout<<"Age: ";cin>>user[counter].age;
     cout<<"Enter Balance: ";cin>>user[counter].balance;
+    criminality( user[counter].name);
      if(user[counter].age<15)
         {cout<<user[counter].start_bus.reservation[2];
         exit('0');
@@ -155,10 +167,10 @@ void create()
     cout<<"\nChoose time to leave\n1,12:00am:\n2,6:00pm ";cin>>time;
     dest_code(ends);
     system("cls");
-    cout<<"\nThe price for the travel is: "<<price;
+    cout<<"\nThe price for the travel is: "<<price<<endl;
     paid(price,unique_key);
-    cout<<"your bus code is: "<<user[counter].des.bus_des_code[ends-1]<<code_bus[time-1]<<"\nStarting your time "<<user[counter].start_bus.time[time-1]<<endl;
-    cout<<"\nYour seat place is "<<seat<<endl;
+    cout<<"\nyour bus code is: "<<user[counter].des.bus_des_code[ends-1]<<code_bus[time-1]<<endl<<"\nStarting time "<<user[counter].start_bus.time[time-1]<<endl;
+    cout<<"\nYour seat number is"<<seat<<endl<<endl;
     counter++;
 
 
@@ -228,17 +240,15 @@ int check(int n,int t)
     return place;
 
 }
-
-int main()
+void customers()
 {
-
-    int choice,exit;
+       int choice,exit;
 
     do
     {
          cout<<"__________________________"<<endl;
     cout<<"|Choose the bellow option:| "<<endl;
-    cout<<"|1.Register               |\n|2.Information             |\n|4.To exit                |"<<endl;
+    cout<<"|1.Register               |\n|2.Information            |\n|4.To exit                |"<<endl;
     cout<<"---------------------------"<<endl;
     cin>>choice;
     cin.ignore();
@@ -251,11 +261,29 @@ case 1:
 case 2:
     info();
 
+}
+}while(exit!=0);
+}
+
+int main()
+{
+    int choose;
+    cout<<"Choose the bellow option"<<endl;
+    cout<<"1.Customer\n2.Adimn"<<endl;
+    cin>>choose;
+    switch(choose)
+    {
+    case 1:
+        customers();
+        break;
+
 
     }
 
 
-    }while(exit!=0);
+
+
+
 
 
 }
