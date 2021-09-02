@@ -17,6 +17,7 @@ void makePayment(Person x, float payment, float distance);
 void ticketAndReciept(Person x, float distance, float total, float rem);
 void updateInfo();
 void checkTicket();
+void information();
 
 int counter = 0, remBal;
 Ticket t[1000];
@@ -42,6 +43,7 @@ void menu(){
         cout << "[1] Get a ticket " << endl;
         cout << "[2] Update Your Reservation " << endl;
         cout << "[3] Check your Reservation(Ticket)" << endl;
+        cout << "[4] Information" << endl;
         cout << "[0] to exit" << endl;
         cout << "Choose: ";
         cin >> choice;
@@ -65,6 +67,8 @@ void menu(){
             else
                 checkTicket();
             break;
+        case 4:
+            information();
 
 
         default:
@@ -499,41 +503,19 @@ void checkTicket(){
 
 }
 
+void information(){
+    system("cls");
+    cout << "CUSTOMER INFORMATION\n";
+    cout << "- You can reserve a seat for your travel by choosing get a ticket option from the menu" << endl;
+    cout << "- You will need to be of legal age in order to get a ticket for travel" << endl;
+    cout << "- You can change any information you want after reserving a seat using your ticket number (tck-'x') to login" << endl;
+    cout << "- Payment for a ticket can be done with a CBE Bank account" << endl;
+
+}
 
 
 
 
-
-
-
-//    cout << "\nSelect Your starting point: ";
-//    cin >> p.initialCity;
-//    cout << "Select your Destination point: ";
-//    cin >> p.destinationCity;
-//
-//    dist = calcDistance(p, c);
-//
-//    cout << "How many tickets do you want: ";
-//    cin >> numOfTickets;
-//    totalPayment = calcPayment(numOfTickets, dist);
-//    system("cls");
-//
-//
-//    cout << "\nThe distance from you starting point to you destination is " << dist << " kms."<< endl;
-//    cout << "Your payment would be " << totalPayment << " birr do you want to continue: ";
-//    cout << "\n[1]Yes \n[2]No \n";
-//    cin >> choice;
-//    switch(choice){
-//    case 1:
-//        makePayment(p,totalPayment, dist);
-//        break;
-//    case 2:
-//        cout << "Reservation Canceled!\n" << endl;
-//        break;
-//    default:
-//        cout << "Invalid! Please Try Again" << endl;
-//    }
-//}
 
 
 
