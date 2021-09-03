@@ -7,14 +7,15 @@ int cal_distance(int ,int);//calculate the distance from starting point to desti
 void dest_code(int m);
 void Report();
 void create();//registor the user and give the prepaid
-int check(int n,int t,int);///check the seat size number
+//int check(int n,int t,int);///check the seat size number
 void paid(int price,int key);//payment transaction takes place
 void receipt(int n,int m,int t,float tax,float price);//Give receipt for the user
 void last_point();//It display the lasting  point
 void prepaid();//Give  the perpaid Card to the user
 void station();//It display the starting point
-int check(int n,int t);//It check the seat for one bus is avalable;
+int check();//It check the seat for one bus is avalable;
 int counter=0;//It count the customer that have been registor
+void seat_Arangment();//To arrange every seat for each bus
 string direction[20]={"N","NE","NW","E","S","SE","SW","W"};//It is the direction of the location of starting to destioation
 int degree[5][5]={{25,45,65,75,90},{110,125,145,165,180},{134,65,120,34,50},{32,12,34,54,565},{32,34,54,56,123}};//The degree that each starting point to each destination
 char code_bus[2]={'A','B'};//To defferinciate the Bud code
@@ -25,6 +26,7 @@ int des_code=1000;//The destination code for each bus
 
 
 int seat=100;
+int v;//the count the number which take the same bus and leaving time
  struct acount
   {
  int acount_num;
@@ -138,17 +140,22 @@ void create()
 {
     int start,ends,price,time,unique_key,seat;
     unique_key=100+rand()%2000;
-    cout<<"Name: ";getline(cin,user[counter].name);
-    cout<<"Age: ";cin>>user[counter].age;
-    cout<<"Enter Balance: ";cin>>user[counter].balance;
+    cout<<"--Enter the information bellow to register--&--to active your perpaid Car"<<endl;
+    cout<<"-->Name: ";getline(cin,user[counter].name);
+    cout<<"-->Age: ";cin>>user[counter].age;
+    cout<<"-->Enter Balance: ";cin>>user[counter].balance;
     criminality( user[counter].name, user[counter].age);
      if(user[counter].age<15)
         {cout<<user[counter].start_bus.reservation[2];
         exit('0');
         }
+        label:
      char choice;
-     cout<<"Would You like to continue: Y/N"<<endl;
+     cout<<" -------------------------------- "<<endl;
+     cout<<"| Would You like to continue: Y/N|"<<endl;
+     cout<<" -------------------------------- "<<endl;
      cin>>choice;
+     system("cls");
      if(choice=='Y'|| choice=='y')
         perpaid(counter,unique_key);
      else if(choice=='N'||choice=='n')
@@ -156,12 +163,17 @@ void create()
      else
      {
         cout<<"Wrong input "<<endl;
+        goto label;
      }
-     cout<<"choose the starting point bellow "<<endl;
-    cout<<"1.Bahirdar\n2.Somalia\n3.Afar\n4.Sidama\n5.Guji"<<endl;
+
+     cout<<" ------------------------"<<endl;
+     cout<<"|Fill Bellow Information |"<<endl;
+     cout<<" ------------------------ "<<endl<<endl;
+     cout<<"-----choose the starting point bellow---- "<<endl;
+    cout<<"->1.Bahirdar\n->2.Somalia\n->3.Afar\n->4.Sidama\n->5.Guji"<<endl;
     cin>>start;
-    cout<<"Choose the destination bellow"<<endl;
-    cout<<"1.Jimma\n2.Adamma\n3.Mekele\n4.Gonder\n5.hawassa"<<endl;
+    cout<<"------Choose the destination bellow------"<<endl;
+    cout<<"->1.Jimma\n->2.Adamma\n->3.Mekele\n->4.Gonder\n->5.hawassa"<<endl;
     cin>>ends;
     dest_code(ends);
     int dis=cal_distance(start,ends);
@@ -172,9 +184,12 @@ void create()
     cout<<"The distance from "<<user[counter].start_bus.start[start-1]<<" to "<<user[counter].des.name[ends-1]<<" is "<<dis<<endl;
     cout<<"\nChoose time to leave\n1,12:00am:\n2,6:00pm ";cin>>time;
     dest_code(ends);
-    seat=check(ends,time);
+    seat_Arangment();
+    int w=check();
+    seat=user[counter].seat_place[start][ends]-w;
     system("cls");
     cout<<"Your unique key "<<unique_key<<endl;
+    cout<<"Seat "<<seat<<endl;
     cout<<"\nThe price for the travel is: "<<user[counter].price<<endl;
     paid(user[counter].price,unique_key);
     user[counter].seat_place[ends][time]=100;
@@ -182,6 +197,8 @@ void create()
     cout<<"\nYour seat place is "<<seat<<endl;
      system("cls");
     receipt(start,ends,time,user[counter].tax_payment,price);
+      int x;
+
     counter++;
 
 
@@ -249,20 +266,34 @@ void dest_code(int m)
         user[counter].des.bus_des_code[m-1]=des_code+(m-1);
 
 }
-int check(int n,int t)
+
+void seat_Arangment()
+{
+    for(int i=0;i<5;i++)
+    {
+     for(int j=0;j<2;j++)
+        {
+    user[counter].seat_place[i][j]=100;
+       }
+    }
+}
+int check()
 {
 
-    dest_code(n);
-   user[counter].seat_place[n][t]=user[counter].seat_place[n][t]--;
-  if(user[counter].seat_place[n][t]>counter)
-    cout<<"congrat"<<endl;
+  for(int i=0;i<counter;i++)
+    {
+        for(int j=0;j<counter;j++)
+        if((user[i].des.bus_des_code==user[i+1].des.bus_des_code)&&(user[i].start_bus.time==user[i+1].start_bus.time))
+        {
 
-else
-    cout<<user[counter].start_bus.reservation[2];
+            v++;
 
-
-    return user[counter].seat_place[n][t];
-
+        }
+        else
+        {
+            v=0;
+        }
+    }
 }
 void report()
 {
@@ -306,6 +337,9 @@ case 1:
     break;
 case 2:
     info();
+case 4:
+    exit=0;
+
 
 }
 }while(exit!=0);
@@ -338,10 +372,15 @@ void admin()
 
 int main()
 {
+
     int choose;
-    cout<<"Choose the bellow option"<<endl;
-    cout<<"1.Customer\n2.Adimn"<<endl;
+    cout<<"----------------------------------------------------------"<<endl;
+    cout<<"                    | Choose the bellow option |"<<endl;
+    cout<<"                    |                          |"<<endl;
+    cout<<"                    | 1.Customer               |\n \t\t    | 2.Adimn                  |"<<endl;
+    cout<<"----------------------------------------------------------"<<endl;
     cin>>choose;
+do{
     switch(choose)
     {
     case 1:
@@ -349,7 +388,7 @@ int main()
         break;
     case 2:
        admin();
+    }
 
-
-}
+}while(choose!=0);
 }
