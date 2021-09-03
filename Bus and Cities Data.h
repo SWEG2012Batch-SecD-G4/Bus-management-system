@@ -18,9 +18,8 @@ struct Person{
 };
 
 struct Bus{
-    int busCode;
-    int busnumber;
-    int seatAvailble;
+    string busDestination;
+    int seatAvailable;
 };
 
 struct Bank{
@@ -33,7 +32,7 @@ struct Bank{
 struct Ticket{
     int ticketNum;
     string name;
-    int id,age;
+    int id,age, bankAccount;
     string initialCity, destinationCity, eligibility;
     float dist, cost, remBalance;
 };
@@ -41,7 +40,8 @@ struct Ticket{
 
 City cities[7] = { {"Jimma", 150, "North"}, {"Mekele", 200, "East"}, {"Gondar", 75, "West"}, {"Harrari", 256, "South"},
                     {"Gambella", 326, "West"}, {"Adigrat", 206, "North"} , {"Sidama", 175, "East"}};
-Bus Buses[5] = { {10, 0001 ,75}, {11, 0002, 100}, {12, 0003, 100}, {13, 0004, 150}, {10, 0005, 75} };
+Bus Buses[7] = {{"Jimma", 75}, {"Mekele", 100}, {"Gondar", 100}, {"Harrari", 150},
+                {"Gambella", 75}, {"Adigrat", 200} , {"Sidama", 150} };
 
 Person criminals[12];
 Bank acc[10];

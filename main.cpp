@@ -12,21 +12,26 @@ void customerService(City c[], Person P);
 void destinations(City cities[]);
 string checkEligibility(Person p);
 float calcDistance(Person y, City cities[]);
-float calcPayment(float amount, float distance);
+float calcPayment(float amount, float distance, float discount);
 void makePayment(Person x, float payment, float distance);
 void ticketAndReciept(Person x, float distance, float total, float rem);
 void updateInfo();
 void checkTicket();
 void information();
+void ticketAdministration();
+float discount(int numofTickets, Person p);
 
-int counter = 0, remBal;
-Ticket t[1000];
+int ticketCounter = 0, remBal;
+Ticket t[500];
 
 int main(){
 
 
     criminalsList();
     bankInformation();
+
+
+
     cout << "WELCOME TO OUR BUS AND TICKET RESERVATION SYSTEM\n";
     menu();
 
@@ -39,6 +44,9 @@ void menu(){
 
 //    cout << counter << endl << endl;
     do{
+        for(int i=0; i<ticketCounter; i++){
+        cout << t[i].ticketNum << endl;
+        }
         cout << "\nMENU " << endl;
         cout << "[1] Get a ticket " << endl;
         cout << "[2] Update Your Reservation " << endl;
@@ -54,14 +62,14 @@ void menu(){
             customerService(cities, p);
             break;
         case 2:
-            if(counter == 0){
+            if(ticketCounter == 0){
                 cout << "\nNo Reservations have been made yet!" << endl;
             }
             else
                 updateInfo();
             break;
         case 3:
-            if(counter == 0){
+            if(ticketCounter == 0){
                 cout << "\nNo Reservations have been made yet!" << endl;
             }
             else
@@ -83,8 +91,7 @@ void menu(){
 
 void customerService(City c[], Person p){
 
-    float dist;
-    float numOfTickets, totalPayment;
+    float dist, numOfTickets, totalPayment, disc;
     int choice;
     string eligibility;
 
@@ -116,11 +123,14 @@ void customerService(City c[], Person p){
 
     cout << "How many tickets do you want: ";
     cin >> numOfTickets;
-    totalPayment = calcPayment(numOfTickets, dist);
+
+    disc = discount(numOfTickets, p);
+    totalPayment = calcPayment(numOfTickets, dist, disc);
 
     system("cls");
 
     cout << "The distance from you starting point to you destination is " << dist << " kms."<< endl;
+    cout << "The discount for " << numOfTickets << " tickets is " << disc << endl;
     cout << "Your payment would be " << totalPayment << " birr do you want to continue: ";
     cout << "\n[1]Yes \n[2]No \n";
     cin >> choice;
@@ -203,9 +213,9 @@ float calcDistance(Person y, City cities[]){
 
 }
 
-float calcPayment(float amount, float distance){
+float calcPayment(float amount, float distance, float discount){
     float payPerKm = 10, totalpayment;
-    totalpayment = payPerKm * distance * amount;
+    totalpayment = payPerKm * distance * amount * discount;
 
     return totalpayment;
 
@@ -308,20 +318,20 @@ void ticketAndReciept(Person x, float distance, float total, float rem){
     cout << "Distance you will travel: " << distance << "Kms" << endl;
     cout << "Total Payment: " << total << " Birr" << endl;
     cout << "your remaining balance in your account: " << rem << " Birr" << endl;
-    cout << "your ticket number is tck-" << counter << endl;
+    cout << "your ticket number is tck-" << ticketCounter << endl;
     cout << "***************************" << endl << endl;
 
-    t[counter].ticketNum = counter;
-    t[counter].name = x.name;
-    t[counter].id = x.id;
-    t[counter].initialCity = x.initialCity;
-    t[counter].destinationCity = x.destinationCity;
-    t[counter].eligibility = checkEligibility(x);
-    t[counter].dist = distance;
-    t[counter].cost = total;
-    t[counter].remBalance = rem;
+    t[ticketCounter].ticketNum = ticketCounter;
+    t[ticketCounter].name = x.name;
+    t[ticketCounter].id = x.id;
+    t[ticketCounter].initialCity = x.initialCity;
+    t[ticketCounter].destinationCity = x.destinationCity;
+    t[ticketCounter].eligibility = checkEligibility(x);
+    t[ticketCounter].dist = distance;
+    t[ticketCounter].cost = total;
+    t[ticketCounter].remBalance = rem;
 
-    counter++;
+    ticketCounter++;
     menu();
 
 };
@@ -329,7 +339,7 @@ void ticketAndReciept(Person x, float distance, float total, float rem){
 void updateInfo(){
     int ticketNum, choice, id, numOfTickets, choice2;
     Person x;
-    float dist, totalPayment;
+    float dist, totalPayment, disc;
     loop:
     cout << "Enter your ticket number tck-";
     cin >> ticketNum;
@@ -369,10 +379,12 @@ void updateInfo(){
             dist = calcDistance(x, cities);
             cout << "How many tickets do you want: ";
             cin >> numOfTickets;
-            totalPayment = calcPayment(numOfTickets, dist);
+            disc = discount(numOfTickets, x);
+            totalPayment = calcPayment(numOfTickets, dist, disc);
             system("cls");
 
             cout << "\nThe distance from you starting point to you destination is " << dist << " kms."<< endl;
+            cout << "The discount for " << numOfTickets << " tickets is " << disc << endl;
             cout << "Your payment would be " << totalPayment << " birr do you want to continue: ";
             cout << "\n[1]Yes \n[2]No \n";
             cin >> choice2;
@@ -416,10 +428,12 @@ void updateInfo(){
             dist = calcDistance(x, cities);
             cout << "How many tickets do you want: ";
             cin >> numOfTickets;
-            totalPayment = calcPayment(numOfTickets, dist);
+            disc = discount(numOfTickets, x);
+            totalPayment = calcPayment(numOfTickets, dist, disc);
             system("cls");
 
             cout << "\nThe distance from you starting point to you destination is " << dist << " kms."<< endl;
+            cout << "The discount for " << numOfTickets << " tickets is " << disc << endl;
             cout << "Your payment would be " << totalPayment << " birr do you want to continue: ";
             cout << "\n[1]Yes \n[2]No \n";
             cin >> choice2;
@@ -513,9 +527,88 @@ void information(){
 
 }
 
+void administration(){
+    int choice, busCounter = 0;
+    Bus newBuses[100];
+
+    cout << "\nMENU " << endl;
+    cout << "[1] Add a new bus to a destination " << endl;
+    cout << "[2] The number of seats left for a destination " << endl;
+    cout << "[3] Get all the ticket information so far " << endl;
+    cout << "[4] How much money is gained so far" << endl;
+    cout << "Choose: ";
+    cin >> choice;
+
+    switch(choice){
+    case 1:
+        cout << "Enter the destination of bus: ";
+        cin >> newBuses[busCounter].busDestination;
+        cout << "Enter the number of seats for the bus: ";
+        cin >> newBuses[busCounter].seatAvailable;
+        busCounter++;
+        break;
+    case 2:
+
+
+            updateInfo();
+        break;
+    case 3:
+
+
+            checkTicket();
+        break;
+    case 4:
+        information();
+
+
+    default:
+
+        cout << "Invalid Please Try Again!" << endl;
+    }
 
 
 
+}
+
+float discount(int numofTickets, Person p){
+    int numOfTravel = 0;
+    float discount;
+    for(int i=0; i<ticketCounter; i++){
+        if(p.id == t[i].id){
+            numOfTravel++;
+        }
+    }
+
+    if(numOfTravel = 0){
+        if(numofTickets > 2){
+            discount = 0.8;
+            cout << "found 0" << endl;
+        }
+        else
+            discount = 1;
+    }
+    else if(numOfTravel = 1){
+        if(numofTickets > 2){
+            cout << "found 1" << endl;
+            discount = (0.8 * 0.9);
+        }
+        else
+            discount = 0.9;
+    }
+
+    else if(numOfTravel > 1){
+        if(numofTickets > 2){
+            discount = 0.8 * 1.25 * sqrt((1/numOfTravel));
+            cout << "found > 1 and 2" << endl;
+        }
+        else
+            discount = 1.25 * sqrt((1/numOfTravel));
+            cout << "found > 1 and 2" << endl;
+    }
+
+    return discount;
+
+}
 
 
 
