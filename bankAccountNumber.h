@@ -18,6 +18,7 @@ void balance_manage(int i, float payement, bool reserve_or_cancel = true);
 int random_balance[10] = {1041, 1465, 7334, 9498, 2167, 7723, 3477, 3355, 9960, 7462};
 int random2[10] = {};
 int random1[10] = {};
+
 void random_generator(int random_assign[10])
 {
     for (int i = 0; i < 10; i++)

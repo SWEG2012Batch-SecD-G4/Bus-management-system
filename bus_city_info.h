@@ -95,7 +95,6 @@ int travelling_city()
 
 // Access granting
 int num_access;
-
 void login_info()
 {
     for (int i = 0; i < 2; i++)
@@ -107,7 +106,7 @@ void login_info()
     }
 }
 
-// add/remove destination city
+// add/remove  city
 void add_city()
 {
     cities_info[cityNo_count] = new City;
