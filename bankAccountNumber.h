@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <vector>
 
 using namespace std;
 struct account
@@ -9,13 +10,13 @@ struct account
     int account;
     float balance;
     int securityCode;
+    bool is_prepaid;
 };
-
-account *user[10];
-void balance_manage(int i, float payement, bool reserve_or_cancel = true);
+account *user;
+vector <account>user_database;
 
 // random number generator;
-int random_balance[10] = {1041, 1465, 7334, 9498, 2167, 7723, 3477, 3355, 9960, 7462};
+
 int random2[10] = {};
 int random1[10] = {};
 
@@ -27,42 +28,117 @@ void random_generator(int random_assign[10])
         random_assign[i] = random_number;
     }
 };
+
 // creates account for  10 user
 void bankInformation()
 {
     for (int i = 0; i < 10; i++)
     {
-        user[i] = new account;
-        user[i]->name = " ";
-        user[i]->account = 1000 + i;
-        cout << user[i]->account << " ";
-        user[i]->balance = random1[i];
-        cout << user[i]->balance << " ";
-        user[i]->securityCode = random2[i];
-        cout << "Code " << user[i]->securityCode << endl;
+        user = new account;
+        user->name = " ";
+        user->account = 1000 + i;
+        user->balance = random1[i];
+        user->securityCode = random2[i];
+        user->is_prepaid = false;
+        user_database.push_back(*user);
+        delete user;
     }
+
+    /* divide the first 5 accounts to non-prepaid and 
+    the last 5 accounts to prepaid */
+
+    for (int i = 0; i < 5; i++)
+        user_database[i].is_prepaid = false;
+    for (int i = 5; i < 10; i++)
+        user_database[i].is_prepaid = true;
+}
+
+// creating prepaid account for the user
+int prepd_ct = 10;
+void create_prepaidAccount()
+{
+	system("cls");
+            user = new account;
+    cout << "Enter your full name: ";
+    string fname, lname; 
+    cin >> fname >> lname;
+    user->name  = fname + " " + lname;
+    cout << "Enter Initial Balance: ";
+    cin >> user->balance;
+    cout << "create a new password (must be number): ";
+    cin >> user->securityCode;
+
+    user->account = 1000 + prepd_ct;
+    user->is_prepaid = true;
+
+    cout << "Account Created Succesfully, Thanks for choosing us\n";
+    cout << "Your prepaid account Number is " << user->account << endl;
+    user_database.push_back(*user);
+    prepd_ct++;
+    delete user;
+    system("pause");
+}
+
+// deposit to prepaid card
+void deposit_prepaid()
+{
+		system("cls");
+    int cardNumber;
+    unsigned int deposit_money;
+    cout << "Enter prepaid card Number: ";
+    cin >> cardNumber;
+
+    // check whether prepaid account exists
+    int acc_index;
+    bool acc_exist = false;
+    for (int i = 0; i < (prepd_ct); i++)
+        if (user_database[i].is_prepaid && cardNumber == user_database[i].account)
+        {
+            acc_index = i;
+            acc_exist = true;
+        }
+
+    if (acc_exist)
+    {
+        cout << "Enter money to be deposited: ";
+        cin >> deposit_money;
+        user_database[acc_index].balance += deposit_money;
+        cout << "Your prepaid balance now is " << user_database[acc_index].balance << endl;
+    }
+    else
+        cout << "Prepaid card account does not exist \n";
+            system("pause");
 }
 
 // to see changes to customer bank account;
-void show_bank_information() {
-    for(int i = 0; i < 10; i++) {
-        cout << user[i]->balance << endl;
+void show_bank_information()
+{
+	cout << "Account Balance prepaid/not security code\n";
+    for (int i = 0; i < (prepd_ct); i++)
+    {
+        cout << user_database[i].account << "  "
+			<< user_database[i].balance << "  " 
+			<< user_database[i].is_prepaid << "\t"
+            << " " << user_database[i].securityCode << endl;
     }
 }
 
 
 /* checks whether the customer have enough balance  and provided 
-correct security code and account Number to reserve a seat */
-bool accountCheck(float payement, int account, int securityCode, bool txn_status)
+correct security code and account Number to reserve a seat
+It also checks type of bank account whether it's prepaid or not */
+bool accountCheck(float payement, int account, int securityCode, bool isPrepaid, bool txn_status)
 {
     bool success_txn = false;
-    bool is_found;
+    bool is_found = false;
     int acc_index;
 
     // checks wether the account number and password exists;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < (prepd_ct); i++)
     {
-        if ((user[i]->account == account) && (user[i]->securityCode == securityCode))
+        if ((user_database[i].account == account) &&
+            (user_database[i].securityCode == securityCode) &&
+            (isPrepaid == user_database[i].is_prepaid))
         {
             acc_index = i;
             is_found = true;
@@ -74,9 +150,9 @@ bool accountCheck(float payement, int account, int securityCode, bool txn_status
     {
         if (txn_status) // if the status is reservation
         {
-            if (user[acc_index]->balance > payement)
+            if (user_database[acc_index].balance > payement)
             {
-                user[acc_index]->balance -= payement;
+                user_database[acc_index].balance -= payement;
                 success_txn = true;
             }
             else
@@ -87,7 +163,7 @@ bool accountCheck(float payement, int account, int securityCode, bool txn_status
         }
         else // if the status is cancelling reservation
         {
-            user[acc_index]->balance += payement;
+            user_database[acc_index].balance += payement;
             success_txn = true;
         }
     }

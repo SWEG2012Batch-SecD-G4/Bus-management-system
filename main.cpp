@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
+#include <string.h>
 #include <iomanip>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
+#include <cctype>
 #include "bankAccountNumber.h"
 #include "bus_city_info.h"
 
@@ -12,7 +14,8 @@ using namespace std;
 
 struct reserve
 {
-    string fname, lname, fullName;
+    string fullName;
+    unsigned int age;
     string destination, initial_city;
     int payement;
     int accountNumber;
@@ -24,76 +27,92 @@ struct reserve
     string resrvd_bus;
     string leaving_time;
     bool is_reserverd;
+    bool is_prepaid;
+    int dest_no, bus_code;
 };
-reserve *resrvd_acc[100];
+reserve *tempReservtn_store;
+vector<reserve> reserved_acc;
 
-// list of functions
-void list_cities(City *[]);
-void showBusInfo();
+// functions participating in reserving a seat
 void reserveSeat();
 float distance_calculator(int, int);
-bool bus_assignment(int, int, reserve *[], int);
+bool bus_assignment(int, int, reserve *, int &);
 int change_leaving_time(int);
-float payement_calculator(int, reserve *[]);
+float payement_calculator(int, reserve *, bool);
 void confirm_resrv(int);
 void receipt(int);
-void show_all_reservation();
 
+//global functions
 int first_ui();
+void date_time();
+
+//interface of customer
 int cust_first_ui();
 void respond_cust_request();
 int search_destination();
-void cancel_reservation(int);
 void modify_reservation(int);
+void cancel_reservation(int, int, int);
 void see_reservation();
 
-// global Variables;
-int resrv_counter = 0;
-
-void date_time();
-
-//login page information
+//login page functions
 bool login_page(int);
-bool login_success(int start, int end, string id, string password);
+bool login_success(int, int, string, string);
+
+// ticketer interface
+int ticketer_interface();
+void respond_ticketer_request(int);
 
 // administrator functions
+int admnistrator_interface();
 void respond_admin_request(int);
 void add_city();
 void remove_city();
+void show_all_reservation();
+void massReservation_cancel(int, string);
+void cancelAll_reservation();
+void generate_report();
 
+// global variable
+int resrv_counter = 0;
+float total_payement_received = 0;
+int total_reservation = 0;
 int main()
 {
     // random_number generator
     random_generator(random1);
     random_generator(random2);
 
-    bankInformation();        // a function that calls Bank information of a customer from bankAccountNumber.h library
-    destinationCity();        // calling destination city function from bus_city_info.h
-    list_cities(cities_info); // showing all cities and bus that travels there
-    showBusInfo();            //  showing individual bus information
-    first_ui();               // first user interface of the program(home page)
+    // user-defined library functions
+    bankInformation();
+    destinationCity();
+
+    //login_information container
+    login_info();
+    first_ui();
 }
 
-// Home page of the software
+// Home page
 int first_ui()
 {
-    cout << right << setw(10) << "Welcome to Bus X reservation system\n";
-    cout << "[1] Enter as customer \n"
-         << "[2] Login as Ticketer \n"
-         << "[3] Login as Administrator \n";
+    system("cls");
     bool do_not_exit = true;
-
     while (do_not_exit)
     {
+        cout << right << setw(10) << "Welcome to Bus X reservation system\n";
+        cout << "[1] Enter as customer \n"
+             << "[2] Login as Ticketer \n"
+             << "[3] Login as Administrator \n";
+
         int choice;
         cin >> choice;
+        system("cls");
         switch (choice)
         {
         case 1:
             respond_cust_request();
             break;
         case 2:
-            add_city();
+            respond_ticketer_request(choice);
             break;
         case 3:
             respond_admin_request(choice);
@@ -109,11 +128,14 @@ int first_ui()
 // homepage for customer
 int cust_first_ui()
 {
+    system("cls");
     cout << "Welcome to CompanyX Bus Reservation System \n"
          << "[1] Search destination\n"
          << "[2] Make Reservation \n"
          << "[3] See Your Reservation \n"
-         << "[4] Home page\n";
+         << "[4] Create a new prepaid card \n"
+         << "[5] Deposit to prepaid card\n"
+         << "[Press any number] To Go Home Page\n";
 
     int option;
     cin >> option;
@@ -140,10 +162,13 @@ void respond_cust_request()
             see_reservation();
             break;
         case 4:
-            show_all_reservation();
+            create_prepaidAccount();
             break;
-
+        case 5:
+            deposit_prepaid();
+            break;
         default:
+            system("cls");
             do_not_exit = false;
             break;
         }
@@ -153,6 +178,7 @@ void respond_cust_request()
 // searching destination
 int search_destination()
 {
+    system("cls");
     cout << "Enter name of the city: ";
     string city_name;
     cin >> city_name;
@@ -162,7 +188,7 @@ int search_destination()
 
     for (int i = 0; i < cityNo_count; i++)
         // if the city the customer searches are on the destination name
-        if (city_name == cities_info[i]->city_name)
+        if (city_name == citiesInfo_database[i].city_name)
         {
             city_index = i;
             found = true;
@@ -170,61 +196,78 @@ int search_destination()
 
     if (found)
     {
-        cout << "Name: " << cities_info[city_index]->city_name << endl
-             << "Distance from AA: " << cities_info[city_index]->km_from_AA << endl
-             << "Direction from AA: " << cities_info[city_index]->direction << endl
+        cout << "Name: " << citiesInfo_database[city_index].city_name << endl
+             << "Distance from AA: " << citiesInfo_database[city_index].km_from_AA << endl
+             << "Direction from AA: " << citiesInfo_database[city_index].direction << endl
              << "Leaving Time: ";
         for (int j = 0; j < 2; j++)
-        {
-            cout << cities_info[city_index]->busDestInfo.leaving_time[city_index] << " ";
-        }
+            cout << citiesInfo_database[city_index].busDestInfo.leaving_time[j] << " ";
+
+        bool cityExists = false;
+        for (int i = 0; i < 2; i++)
+            if (citiesInfo_database[city_index].busDestInfo.seatAvailble[i] > 0)
+                cityExists = true;
 
         cout << "\nAvailable: ";
-        if (cities_info[city_index]->busDestInfo.seatAvailble > 0)
+        if (cityExists)
             cout << "Yes\n";
         else
             cout << "No\n";
     }
     else
-    {
         cout << "\n No such city found in our database\n";
-    }
+    system("pause");
 }
 
 // reserve seat
 void reserveSeat()
 {
+    system("cls");
     // create a new reserve everytime this function is called
-    resrvd_acc[resrv_counter] = new reserve;
 
-    cout << "Enter Name: ";
-    cin >> resrvd_acc[resrv_counter]->fname;
+    tempReservtn_store = new reserve;
+    cout << "Enter FullName: ";
+    string fname, lname;
+    cin >> fname >> lname;
+    tempReservtn_store->fullName = fname + " " + lname;
 
-    // travelling city information;
+    cout << "Enter your age: ";
+    cin >> tempReservtn_store->age;
+    while (tempReservtn_store->age < 18)
+    {
+        cout << "You are under Age: ";
+        cin >> tempReservtn_store->age;
+    }
+// travelling city information;
+label:
     cout << "Choose starting Point: ";
-    int startingPoint = travelling_city() - 1;
+    int startingPt = travelling_city() - 1;
     cout << "Choose Destination City: ";
     int destination = travelling_city() - 1;
+    tempReservtn_store->dest_no = destination;
 
     // calculating distance between starting city and destination city;
     // checks whether customer enters the same name at both destination and starting city
-    if (startingPoint != destination)
+    if (startingPt != destination)
     {
         // assign a city to customer information
-        resrvd_acc[resrv_counter]->destination = cities_info[destination]->city_name;
-        resrvd_acc[resrv_counter]->initial_city = cities_info[startingPoint]->city_name;
+        tempReservtn_store->destination = citiesInfo_database[destination].city_name;
+        tempReservtn_store->initial_city = citiesInfo_database[startingPt].city_name;
 
-        resrvd_acc[resrv_counter]->travelling_distance = distance_calculator(destination, startingPoint);
+        tempReservtn_store->travelling_distance = distance_calculator(destination, startingPt);
     }
     else
-        cout << "No inside service \n";
+    {
+        cout << "No inside service:Please enter again! \n";
+        goto label;
+    }
 
     cout << "Choose Travelling option \n"
          << "[1] One Way \n"
          << "[2] Round Trip: ";
-    cin >> resrvd_acc[resrv_counter]->return_oneWay;
+    cin >> tempReservtn_store->return_oneWay;
     cout << "Number of tickets: ";
-    cin >> resrvd_acc[resrv_counter]->ticket_size;
+    cin >> tempReservtn_store->ticket_size;
 
     // asking a customer for time of reservation
     cout << "Leaving Time: \n";
@@ -234,41 +277,71 @@ void reserveSeat()
     }
     int l_time_choice;
     cin >> l_time_choice;
+    l_time_choice -= 1;
 
     // assigning bus to a customer
     // bus_assignment also checks if there's avaible seat
-    bool bus_available = bus_assignment(destination, resrv_counter, resrvd_acc, (l_time_choice - 1));
+    bool bus_available = bus_assignment(destination, resrv_counter, tempReservtn_store, (l_time_choice));
     if (bus_available)
     {
+        // payement
+        cout << "Choose payement method\n"
+             << "[1] Prepaid\n"
+             << "[2] Bank \n";
+        int payement_method;
+        cin >> payement_method;
+        if (payement_method == 1)
+            tempReservtn_store->is_prepaid = true;
+        else
+            tempReservtn_store->is_prepaid = false;
+
         // Bank Account Information;
         cout << "Enter account: ";
-        cin >> resrvd_acc[resrv_counter]->accountNumber;
+        cin >> tempReservtn_store->accountNumber;
         cout << "Enter security Code: ";
-        cin >> resrvd_acc[resrv_counter]->securityNumber;
+        cin >> tempReservtn_store->securityNumber;
 
         // calculates total payement;
-        float payement = payement_calculator(resrv_counter, resrvd_acc);
-        resrvd_acc[resrv_counter]->payement = payement;
+        float payement = payement_calculator(resrv_counter, tempReservtn_store,
+                                             tempReservtn_store->is_prepaid);
+        tempReservtn_store->payement = payement;
+
+        //assign buses to the customer
+        tempReservtn_store->resrvd_bus = busInfo_database[destination].bus_cd[l_time_choice];
+        tempReservtn_store->leaving_time = l_time[l_time_choice];
 
         // confirm payement and reservation;
         confirm_resrv(resrv_counter);
         cout << "Do you want to continue \n (Y\\N)";
-        char confirm; cin >> confirm;
+        char confirm;
+        cin >> confirm;
         confirm = tolower(confirm);
 
         if (confirm == 'y')
         {
-            // check the payement information from banks
+            // check your payement information from banks
             // if the customer have balance that allows him to reserve a seat success will be true.
-            bool success = accountCheck(resrvd_acc[resrv_counter]->payement,
-                                        resrvd_acc[resrv_counter]->accountNumber,
-                                        resrvd_acc[resrv_counter]->securityNumber, true);
+            bool success = accountCheck(tempReservtn_store->payement,
+                                        tempReservtn_store->accountNumber,
+                                        tempReservtn_store->securityNumber,
+                                        tempReservtn_store->is_prepaid, true);
+
             if (success)
             {
-                resrvd_acc[resrv_counter]->resrvd_seat = 1 + resrv_counter;
+                busInfo_database[destination].seatAvailble[l_time_choice] -= (tempReservtn_store->ticket_size);
+                tempReservtn_store->resrvd_seat = (100 - busInfo_database[destination].seatAvailble[l_time_choice]);
+                tempReservtn_store->is_reserverd = true;
+                tempReservtn_store->bus_code = l_time_choice;
+
+                // recording payement information
+                busInfo_database[destination].payement[l_time_choice] += payement;
+                total_payement_received += payement;
+                total_reservation +=tempReservtn_store->ticket_size;
+
+                reserved_acc.push_back(*tempReservtn_store);
                 receipt(resrv_counter);
-                resrvd_acc[resrv_counter]->is_reserverd = true;
                 resrv_counter++;
+                delete tempReservtn_store; // release a memory;
             }
             else
             { /* if customer does provide accountNumber that does not exist, 
@@ -276,29 +349,28 @@ void reserveSeat()
                     haven't not provided correct security code, cancel the reservation
                  */
 
-                delete resrvd_acc[resrv_counter];
                 cout << "Transaction was not successful \n"
                      << "Please check your bank information \n";
+                delete tempReservtn_store; // release a memory;
+                system("pause");
             }
         }
-        else
-        {
-            // if the customer do not want to continue cancle reservation
-            delete resrvd_acc[resrv_counter];
+        else{
             cout << "Request canceled \n";
-        }
+            delete tempReservtn_store; // release a memory; 
+            }
     }
 }
 
 // distance calculator
-float distance_calculator(int destination, int startingPoint)
+float distance_calculator(int destination, int startingPt)
 {
     float distance_km;
     // if the two cities are on the same direction
-    if (cities_info[destination]->direction == cities_info[startingPoint]->direction)
+    if (citiesInfo_database[destination].direction == citiesInfo_database[startingPt].direction)
     {
-        distance_km = cities_info[destination]->km_from_AA -
-                      cities_info[startingPoint]->km_from_AA;
+        distance_km = citiesInfo_database[destination].km_from_AA -
+                      citiesInfo_database[startingPt].km_from_AA;
         distance_km = (distance_km < 0) ? ((-1) * distance_km) : distance_km;
     }
     else // if the two cities are on different direction;
@@ -311,13 +383,17 @@ float distance_calculator(int destination, int startingPoint)
         switch (option)
         {
         case 1:
-            distance_km = (cities_info[destination]->km_from_AA +
-                           cities_info[startingPoint]->km_from_AA);
+        {
+            distance_km = (citiesInfo_database[destination].km_from_AA +
+                           citiesInfo_database[startingPt].km_from_AA);
             break;
+        }
         case 2:
-            distance_km = sqrt(pow(cities_info[destination]->km_from_AA, 2) +
-                               pow(cities_info[startingPoint]->km_from_AA, 2));
+        {
+            distance_km = sqrt(pow(citiesInfo_database[destination].km_from_AA, 2) +
+                               pow(citiesInfo_database[startingPt].km_from_AA, 2));
             break;
+        }
         default:
             break;
         }
@@ -326,14 +402,14 @@ float distance_calculator(int destination, int startingPoint)
 }
 
 // assignning bus to a customer;
-bool bus_assignment(int d_num, int resrv_counter, reserve *resrvd_acc[], int l_choice)
+bool bus_assignment(int d_num, int resrv_counter, reserve *tempReservtn_store, int &l_choice)
 {
     int time_changed;
     bool seat_exist;
 
-    if (bus_rg[d_num]->seatAvailble[l_choice] > 0)
+    if (busInfo_database[d_num].seatAvailble[l_choice] > 0)
         seat_exist = true;
-    // if time customer requests is not available
+    // if time customer request is not available
     else
     {
         time_changed = change_leaving_time(l_choice);
@@ -346,16 +422,7 @@ bool bus_assignment(int d_num, int resrv_counter, reserve *resrvd_acc[], int l_c
             seat_exist = false;
     }
 
-    if (seat_exist)
-    {
-        resrvd_acc[resrv_counter]->resrvd_bus = bus_rg[d_num]->bus_cd[l_choice];
-        resrvd_acc[resrv_counter]->leaving_time = l_time[l_choice];
-        bus_rg[d_num]->seatAvailble[l_choice]--;
-
-        return true;
-    }
-    else
-        return false;
+    return seat_exist;
 }
 
 // if bus is not available at requested time
@@ -367,7 +434,7 @@ int change_leaving_time(int l_choice)
 
     cout << "NO seat available at " << l_time[l_choice] << "\n";
     for (int i = 0; i < 2; i++)
-        if ((i != l_choice) && (bus_rg[i]->seatAvailble > 0))
+        if ((i != l_choice) && (busInfo_database[i].seatAvailble[i] > 0))
         {
             cout << "Would you like to change time to: " << l_time[i];
             time_index = i;
@@ -387,24 +454,32 @@ int change_leaving_time(int l_choice)
 }
 
 // calculating payement;
-float payement_calculator(int resrv_counter, reserve *resrvd_acc[])
+float payement_calculator(int resrv_counter, reserve *tempReservtn_store, bool isPrepaid)
 {
+    float birr_per_km = 10;
+    float discount_rate = 20 / 100.0;
 
-    float payement = resrvd_acc[resrv_counter]->return_oneWay *
-                     resrvd_acc[resrv_counter]->ticket_size *
-                     resrvd_acc[resrv_counter]->travelling_distance * 10;
+    // prepaid card have discount
+    if (isPrepaid)
+        birr_per_km = birr_per_km - (birr_per_km * discount_rate);
+
+    float payement = tempReservtn_store->return_oneWay *
+                     tempReservtn_store->ticket_size *
+                     tempReservtn_store->travelling_distance * birr_per_km;
     return payement;
 }
 
 // confirm reservation
 void confirm_resrv(int i)
 {
-    cout << "Name: " << resrvd_acc[i]->fname << endl;
-    cout << "Destination: " << resrvd_acc[i]->destination << endl;
-    cout << "Bus code : " << resrvd_acc[i]->resrvd_bus << endl;
-    cout << "Leaving time: " << resrvd_acc[i]->leaving_time << endl;
-    cout << "Distance in km: " << resrvd_acc[i]->travelling_distance << endl;
-    cout << "Total payment : " << resrvd_acc[i]->payement << endl;
+    system("cls");
+    cout << "Confirm Your Reservation\n\n";
+    cout << "Name: " << tempReservtn_store->fullName << endl;
+    cout << "Destination: " << tempReservtn_store->destination << endl;
+    cout << "Bus code : " << tempReservtn_store->resrvd_bus << endl;
+    cout << "Leaving time: " << tempReservtn_store->leaving_time << endl;
+    cout << "Distance in km: " << tempReservtn_store->travelling_distance << endl;
+    cout << "Total payment : " << tempReservtn_store->payement << endl;
 }
 
 void date_time()
@@ -418,137 +493,108 @@ void date_time()
 }
 
 // printing receipt after confirming the transaction;
-void receipt(int resrv_counter)
+void receipt(int pos)
 {
-    //system("cls");
+    system("cls");
     cout << right << setw(50) << "Bus X Transport Service\n";
-    cout << "Receipt Number: " << resrvd_acc[resrv_counter]->resrvd_seat << endl;
-    cout << "Prepared for: " << resrvd_acc[resrv_counter]->fname << endl;
-    cout << "Travel Info: From " << resrvd_acc[resrv_counter]->initial_city << " TO " << resrvd_acc[resrv_counter]->destination << endl;
-    cout << "Leaving Time: " << resrvd_acc[resrv_counter]->leaving_time << endl;
+    cout << "Reciept \n";
+
+    cout << "Seat Number: ";
+    for (int i = reserved_acc[pos].resrvd_seat;
+         i > (reserved_acc[pos].resrvd_seat - reserved_acc[pos].ticket_size); i--)
+        cout << i << ", ";
+
+    cout << "\nPrepared for: " << reserved_acc[pos].fullName << endl;
+    cout << "Travel Info: From " << reserved_acc[pos].initial_city
+         << " TO " << reserved_acc[pos].destination << endl;
+    cout << "Leaving Time: " << reserved_acc[pos].leaving_time << endl;
     cout << "Date: ";
     date_time();
-    cout << endl;
-    cout << endl;
+
+    cout << endl << endl;
     cout << "Description Quantity price/Quantity Total Price " << endl;
     cout << left << setw(10) << "Transport\t"
-         << left << setw(10) << resrvd_acc[resrv_counter]->ticket_size << " "
-         << left << setw(10) << resrvd_acc[resrv_counter]->travelling_distance / 10
-         << left << setw(10) << resrvd_acc[resrv_counter]->payement << endl;
-}
-
-// shows list of  cities
-void list_cities(City *cities_info[])
-{
-    cout << setw(75) << setfill('_') << "_" << endl;
-    cout << "|Name of cities   | Distance in KM from AA "
-         << "| Direction from AA | Bus Code |\n";
-    for (int i = 0; i < 5; i++)
-    {
-        cout << setw(75) << setfill('_') << "|" << endl;
-        cout << left << setw(10) << setfill(' ') << cities_info[i]->city_name << "\t\t"
-             << left << setw(5) << cities_info[i]->km_from_AA << "\t\t\t  "
-             << left << setw(10) << cities_info[i]->direction << "\t  "
-             << cities_info[i]->busDestInfo.bus_dest_cd << "\t  |" << endl;
-    }
-    cout << setw(75) << setfill('_') << "_" << endl;
-}
-
-// show bus information
-void showBusInfo()
-{
-    cout << "AS = Available seat \n";
-    cout << "Bus code | Destination | number of buses | "
-         << "Bus 1 AS | Leaving Time | Bus2 AS | Leaving Time \n";
-
-    for (int i = 0; i < 5; i++)
-    {
-        cout << " " << left << setw(10) << setfill(' ')
-             << bus_rg[i]->bus_dest_cd << "  "
-             << left << setw(10) << cities_info[i]->city_name << "\t\t"
-             << left << setw(10) << 2 << "   ";
-
-        for (int j = 0; j < 2; j++)
-        {
-            cout << left << setw(10) << bus_rg[i]->seatAvailble[j]
-                 << left << setw(10) << bus_rg[i]->leaving_time[j] << "\t";
-        }
-        cout << endl;
-    }
-}
-
-// void shows all reservation
-void show_all_reservation()
-{
-    cout << "Number of resrvation: " << resrv_counter << endl;
-    for (int i = 0; i < resrv_counter; i++)
-    {
-        cout << "Name " << resrvd_acc[i]->fname << endl;
-    }
-    show_bank_information();
-    cout << endl;
+         << left << setw(10) << reserved_acc[pos].ticket_size << " "
+         << left << setw(10) << reserved_acc[pos].travelling_distance / 10
+         << left << setw(10) << reserved_acc[pos].payement << endl;
+    system("pause");
 }
 
 void see_reservation()
 {
-    cout << "Enter name: ";
-    string name;
-    cin >> name;
-    for (int index = 0; index < resrv_counter; index++)
-    {
-        if (name == resrvd_acc[index]->fname)
-        {
-            receipt(index); // shows customer his reservation;
+    system("cls");
+    cout << "Enter FullName: ";
+    string fname, lname, name;
+    cin >> fname >> lname;
+    name = fname + " " + lname;
 
-            cout << "[1] To cancel reservation \n"
-                 << "[2] To change reservation \n";
-            int option;
-            cin >> option;
-            switch (option)
-            {
-            case 1:
-                // put a condition that checks the customer elligibility for cancelling reservation
-                cancel_reservation(index);
-                cout << "Total Number of people reserved a seat is  " << resrv_counter << endl;
-                break;
-            case 2:
-                modify_reservation(index);
-                break;
-            default:
-                break;
-            }
+    bool isFound = false;
+    int index;
+    for (int i = 0; i < reserved_acc.size(); i++)
+        if (name == reserved_acc[i].fullName)
+        {
+            isFound = true;
+            index = i;
+        }
+
+    if (isFound)
+    {
+        receipt(index); // shows customer his reservation;
+
+        cout << "[1] To cancel reservation \n"
+             << "[2] To change reservation \n";
+        int option;
+        cin >> option;
+        switch (option)
+        {
+        case 1:
+            cancel_reservation(index, reserved_acc[index].dest_no, reserved_acc[index].bus_code);
+            cout << "Reservation canceled \n";
+            break;
+        case 2:
+            modify_reservation(index);
+            break;
+        default:
+            break;
         }
     }
+    else
+        cout << "No reservation under the name " << name << endl;
+    system("pause");
 }
 
 // cancel reservation: can be used to make  cancel all the reservation;
-void cancel_reservation(int cust_index)
+void cancel_reservation(int cust_index, int i, int j)
 {
-    //give the customer is money back;
-    bool isMoney_back = accountCheck(resrvd_acc[cust_index]->payement,
-                                     resrvd_acc[cust_index]->accountNumber,
-                                     resrvd_acc[cust_index]->securityNumber, false);
-    // deleting the reservation from system
-    for (int i = cust_index; i < resrv_counter; i++)
-    {
-        resrvd_acc[i] = resrvd_acc[i + 1];
-    }
-    delete resrvd_acc[resrv_counter];
+    //payback the money
+    float payement = reserved_acc[cust_index].payement;
+    int number_seats = reserved_acc[cust_index].ticket_size;
+    bool isMoney_back = accountCheck(payement,
+                                     reserved_acc[cust_index].accountNumber,
+                                     reserved_acc[cust_index].securityNumber,
+                                     reserved_acc[cust_index].is_prepaid, false);
+
+    //delete tempReservtn_store[resrv_counter];
+    reserved_acc.erase(reserved_acc.begin() + cust_index);
+
+    //  rearranging bus seat number and payement;
+    total_payement_received -= payement;
+    busInfo_database[i].payement[j] -= payement;
+    busInfo_database[i].seatAvailble[j] += number_seats;
+
     resrv_counter--;
 }
 
 // modifying reservation
 void modify_reservation(int cust_index)
 {
-    cout << "You can change the following information in your booking \n"
-         << "[1] Your name \n"
-         << "[2] Leaving Time: \n"
-         << "[3] To Finish\n"
-         << "[3] To Go back" << endl;
-
     bool do_not_exit = true;
     while (do_not_exit)
     {
+        cout << "You can change the following information in your booking \n"
+             << "[1] Your name \n"
+             << "[2] Leaving Time: \n"
+             << "[3] To Finish\n";
         int option;
         cin >> option;
 
@@ -557,7 +603,10 @@ void modify_reservation(int cust_index)
         case 1:
         {
             cout << "Enter your new name: ";
-            cin >> resrvd_acc[cust_index]->fname;
+            string fname, lname;
+            cin >> fname >> lname;
+            reserved_acc[cust_index].fullName = fname + " " + lname;
+            cout << "Name changed successfuly \n";
             break;
         }
         case 2:
@@ -569,28 +618,29 @@ void modify_reservation(int cust_index)
             cin >> l_time_choice;
 
             // Not the best way to do it, but for now
-            resrvd_acc[cust_index]->leaving_time = l_time[l_time_choice - 1];
+            reserved_acc[cust_index].leaving_time = l_time[l_time_choice - 1];
+            cout << "Leaving time is changed successfuly \n";
             break;
         }
         case 3:
             receipt(cust_index);
             break;
         default:
+            system("cls");
             do_not_exit = false;
             break;
         }
     }
 }
 
-// second section of the project
 // login page for ticketer and administrator
 bool login_page(int i)
 {
-    // login_information container
-    login_info();
-
+    system("cls");
     bool status;
     string password, id;
+    cout << setw(10) << "Enter your Login information below\n";
+    cout << "Both ID and password are case sensitive \n";
     cout << "ID NO: ";
     cin >> id;
     cout << "password: ";
@@ -599,36 +649,93 @@ bool login_page(int i)
     switch (i)
     {
     case 2:
-        status = login_success(0, num_access, id, password);
+        status = login_success(1, num_access, id, password);
         break;
     case 3:
-         status = login_success(0, 1, id, password);
+        status = login_success(0, 1, id, password);
         break;
     default:
-        status  = false;
+        status = false;
         break;
     }
     return status;
 }
 
+// confirms login credentials
 bool login_success(int start, int end, string id, string password)
 {
+    bool login_success = false;
     for (int i = start; i < end; i++)
+        if ((id == loginInfo_database[i].id) && (password == loginInfo_database[i].password))
+            login_success = true;
+
+    return login_success;
+}
+
+// ticketer page
+int ticketer_interface()
+{
+    system("cls");
+    cout << "Welcome to CompanyX Bus Reservation System \n"
+         << "[1] Reserve for customer\n"
+         << "[2] Show All cities and Buses Assigned \n"
+         << "[3] Show All Major Buses Information \n"
+         << "[Press any number] To Go Home Page\n";
+
+    int option;
+    cin >> option;
+    return option;
+}
+
+void respond_ticketer_request(int index)
+{
+    if (login_page(index))
     {
-        if ((id == login_create[i]->id) && (password == login_create[i]->password))
-            return true;
-        else
-            return false;
+        bool do_not_exit = true;
+        int option;
+        while (do_not_exit)
+        {
+            option = ticketer_interface();
+
+            switch (option)
+            {
+            case 1:
+                respond_cust_request();
+                break;
+            case 2:
+                list_cities();
+                break;
+            case 3:
+                showBusInfo();
+                break;
+            case 4:
+                first_ui();
+                break;
+            default:
+                system("cls");
+                do_not_exit = false;
+                break;
+            }
+        }
     }
+    else
+        cout << "Incorrect login information \n";
+    system("pause");
 }
 
 // administrator first user interfaces
 int administrator_interface()
 {
+    system("cls");
     cout << "Welcome Mr. Admisnistrator \n"
          << "[1] To add city to lists \n"
          << "[2] To remove city from lists \n"
-         << "[3] To Grant a Ticketer priveledges \n";
+         << "[3] show all reservations \n"
+         << "[4] To Grant a Ticketer priveledges \n"
+         << "[5] Mass reservation cancelling \n"
+         << "[6] Generate Report \n"
+         << "[Press any number] To Go Home Page\n";
+
     int response;
     cin >> response;
     return response;
@@ -651,10 +758,143 @@ void respond_admin_request(int index)
             case 2:
                 remove_city();
                 break;
+            case 3:
+                show_all_reservation();
+                break;
+            case 4:
+                create_ticketer_login();
+                break;
+            case 5:
+                cancelAll_reservation();
+                break;
+            case 6:
+                generate_report();
+                break;
             default:
+                system("cls");
                 do_not_exit = false;
                 break;
             }
         }
     }
+    else
+        cout << "Incorrect Login information \n";
+}
+
+void show_all_reservation()
+{
+    system("cls");
+    cout << "Total Number of resrvation: " << total_reservation << endl;
+    cout << " Full Name   \t| Initial | Destination | "
+         << "Bus Assigned | seatNumber | Leaving Time | Distance | payement\n";
+    cout << setprecision(1) << fixed;
+    for (int i = 0; i < resrv_counter; i++)
+    {
+        cout << " " << left << setw(5) << reserved_acc[i].fullName << right << setw(10)
+             << reserved_acc[i].initial_city << right << setw(15)
+             << reserved_acc[i].destination << right << setw(12)
+             << reserved_acc[i].resrvd_bus << right << setw(10);
+
+             if(reserved_acc[i].ticket_size > 1)
+                cout << reserved_acc[i].resrvd_seat - reserved_acc[i].ticket_size + 1
+                     << " - " << reserved_acc[i].resrvd_seat << right << setw(17);
+             else
+                cout << reserved_acc[i].resrvd_seat << right << setw(20);
+
+             cout << reserved_acc[i].leaving_time << right << setw(10)
+             << reserved_acc[i].travelling_distance << right << setw(10)
+             << reserved_acc[i].payement << endl;
+    }
+    system("pause");
+}
+
+void cancelAll_reservation()
+{
+    system("cls");
+    bool do_not_exit = true;
+    string cancelType[2] = {" Destination name: ", " Bus code: "};
+
+    cout << "[1] To all reservation to destination\n"
+         << "[2] To cancel specific buses reservation to destination\n";
+
+    int option;
+    cin >> option;
+
+    switch (option)
+    {
+    case 1:
+        massReservation_cancel(option, cancelType[option - 1]);
+        break;
+    case 2:
+        massReservation_cancel(option, cancelType[option - 1]);
+        break;
+    default:
+        do_not_exit = false;
+        break;
+    }
+}
+
+// mass bus reservation cancelling
+void massReservation_cancel(int option, string cancelType)
+{
+    cout << "Enter a" << cancelType;
+    string cancel_type;
+    cin >> cancel_type;
+
+    bool is_canceled = false;
+    for (int i = 0; i < resrv_counter; i++)
+    {
+        switch (option)
+        {
+        case 1:
+            if (reserved_acc[i].destination == cancel_type)
+            {
+                cancel_reservation(i, reserved_acc[i].dest_no, reserved_acc[i].bus_code);
+                is_canceled = true;
+            }
+            break;
+        case 2:
+            if (reserved_acc[i].resrvd_bus == cancel_type)
+            {
+                cancel_reservation(i, reserved_acc[i].dest_no, reserved_acc[i].bus_code);
+                is_canceled = true;
+            }
+            break;
+        default:
+            cout << "Incorrect option/ please try again!. \n";
+            break;
+        }
+    }
+
+    if (is_canceled)
+        cout << "All reservation have been canceled succesfully!\n";
+    else
+        cout << "Operation was not successful, check " << cancelType << "again!\n";
+    system("pause");
+}
+
+// a function that generates report
+void generate_report()
+{
+    system("cls");
+    cout << "Date: ";
+    date_time();
+    cout << "Bus Code | payement Received | Seat Reserved" << endl;
+    for (int i = 0; i < busInfo_database.size(); i++)
+        for (int j = 0; j < 2; j++)
+        {
+            cout << " " << busInfo_database[i].bus_cd[j] << right << setw(15);
+            if (busInfo_database[i].seatAvailble[j] < 100)
+            {
+                cout << busInfo_database[i].payement[j] << right << setw(15)
+                     << (100 - busInfo_database[i].seatAvailble[j]) << endl;
+            }
+            else
+                cout << "None" << right << setw(15)
+                     << "0" << endl;
+        }
+
+    cout << "Total reservation made: " << total_reservation << endl;
+    cout << "Total Payement Received: " << total_payement_received << endl;
+    system("pause");
 }

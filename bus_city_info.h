@@ -1,19 +1,24 @@
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <vector>
+#include <cstdlib>
 
 using namespace std;
 
-// bus iformation container
+// bus information container
 struct Bus
 {
     int bus_dest_cd;
-    string bus_cd[2];
-    int seatAvailble[2];
-    string leaving_time[4];
+    vector<string>bus_cd;
+    vector<int>seatAvailble;
+    vector<int>payement;
+    vector<string>leaving_time;
 };
-Bus *bus_rg[100];
+Bus *bus_rg;
+vector <Bus>busInfo_database;
 
-// city information container
+// contains information about city
 struct City
 {
     string city_name;
@@ -21,111 +26,182 @@ struct City
     string direction;
     Bus busDestInfo;
 };
-City *cities_info[100];
+City *cities_info;
+vector<City> citiesInfo_database;
 
 // login informatino container
 struct login
 {
     string id, password;
 };
-login *login_create[5];
+login *login_create;
+vector <login> loginInfo_database;
 
 // variables
 int cityNo_count = 0;
-int number_buses = 10;
-int number_dest = 5;
 
 // list of initial cities city and km
-string city[5] = {"Jimma", "Nakemte", "Bahirdar", "Gambela", "Makelle"};
-float distance_AA[5] = {25, 50, 100, 30, 10};
-string direction_AA[5] = {"North", "South", "West", "East", "North"};
-string l_time[4] = {"12:00 AM", "6:00 AM", "12:00 PM", "6:00 PM"};
+vector<string> city ( {"Jimma", "Nakemte", "Bahirdar", "Gambela", "Makelle" });
+vector<float> distance_AA ( {25, 50, 100, 30, 10 });
+vector <string> direction_AA ( {"north", "south", "west", "east", "north" });
+vector <string> l_time ( {"12:00 AM", "6:00 AM", "12:00 PM", "6:00 PM" });
 
 // initial login information for ticketer and administrator
-string initial_login[][2] = {{"admin", "password"}, {"ticketer", "password"}};
-
+vector<vector<string> > initial_login{{"admin", "password"}, {"ticketer", "password"}};
 
 // ammending bus information
-int bus_dest_count;
+int number_buses = 10;
+int number_dest = 5;
+int bus_dest_count = 0;
+
 Bus bus_info()
 {
-    bus_rg[bus_dest_count] = new Bus;
-    bus_rg[bus_dest_count]->bus_dest_cd = 100 + bus_dest_count;
+    bus_rg = new Bus;
+    bus_rg->bus_dest_cd = 100 + bus_dest_count;
     int dest_per_bus = number_buses / number_dest;
 
     for (int i = 0; i < dest_per_bus; i++)
     {
         char code = 65;
         code += i;
-        bus_rg[bus_dest_count]->bus_cd[i] = to_string(bus_rg[bus_dest_count]->bus_dest_cd) + code;
-        bus_rg[bus_dest_count]->leaving_time[i] = l_time[i];
-        bus_rg[bus_dest_count]->seatAvailble[i] = 100;
+        bus_rg->bus_cd.push_back(to_string(bus_rg->bus_dest_cd) + code);
+        bus_rg->leaving_time.push_back(l_time[i]);
+        bus_rg->seatAvailble.push_back(100);
+        bus_rg->payement.push_back(0);
     }
-
-    return *bus_rg[bus_dest_count];
+        bus_dest_count++;
+    busInfo_database.push_back(*bus_rg);
+    return *bus_rg;
 }
 
-// create initial destination city;
+// create  destination city;
 void destinationCity()
 {
 
     for (int i = 0; i < 5; i++)
     {
-        cities_info[cityNo_count] = new City;
-        cities_info[cityNo_count]->city_name = city[i];
-        cities_info[cityNo_count]->km_from_AA = distance_AA[i];
-        cities_info[cityNo_count]->direction = direction_AA[i];
-        cities_info[cityNo_count]->busDestInfo = bus_info();
+        cities_info = new City;
+        cities_info->city_name = city[i];
+        cities_info->km_from_AA = distance_AA[i];
+        cities_info->direction = direction_AA[i];
+        cities_info->busDestInfo = bus_info();
+        citiesInfo_database.push_back(*cities_info);
         cityNo_count++;
-        bus_dest_count++;
+
+        //release a memory
+        delete bus_rg;
+        delete cities_info;
     }
+
+    for(int i = 0; i < busInfo_database.size(); i++)
+    {
+        cout << busInfo_database[i].bus_dest_cd << " ";
+        for(int j = 0;  j < 2; j++)
+         cout << busInfo_database[i].bus_cd[j] << " " << busInfo_database[i].leaving_time[j] << " " ;
+        
+        cout << endl;
+    }
+    system("pause");
 }
 
-// list of  cities
+// shows customer list of cities giving service
 int travelling_city()
 {
     int city_choice;
     for (int i = 0; i < cityNo_count; i++)
     {
-        cout << "[" << i + 1 << "] " << cities_info[i]->city_name << endl;
+        cout << "[" << i + 1 << "] " << citiesInfo_database[i].city_name << endl;
     }
     cin >> city_choice;
     return city_choice;
 }
 
-// Access granting
-int num_access;
+// INITIAL ACCESS GRANTING
+int num_access = 0;
 void login_info()
 {
     for (int i = 0; i < 2; i++)
     {
-        login_create[num_access] = new login;
-        login_create[num_access]->id = initial_login[i][0];
-        login_create[num_access]->password = initial_login[i][1];
+        login_create = new login;
+        login_create->id = initial_login[i][0];
+        login_create->password = initial_login[i][1];
+        loginInfo_database.push_back(*login_create);
         num_access++;
+
+        delete login_create; // release a memory
     }
 }
 
-// add/remove  city
-void add_city()
+// TICKETER PAGE FUNCTIONALITIES
+// show lists of all cities and correspoing bus information
+void list_cities()
 {
-    cities_info[cityNo_count] = new City;
-    cout << "Enter name of new city: ";
-    cin >> cities_info[cityNo_count]->city_name;
-    cout << "Enter city distance in km from AA: ";
-    cin >> cities_info[cityNo_count]->km_from_AA;
-    cout << "Enter city direction from AA: ";
-    cin >> cities_info[cityNo_count]->direction;
-
-    // appending bus information
-    cities_info[cityNo_count]->busDestInfo = bus_info();
-    cityNo_count++;
+    system("cls");
+    cout << setw(75) << setfill('_') << "_" << endl;
+    cout << "|Name of cities   | Distance in KM from AA "
+         << "| Direction from AA | Bus Code |\n";
+    for (int i = 0; i < citiesInfo_database.size(); i++)
+    {
+            cout << setw(75) << setfill('_') << "|" << endl;
+            cout << left << setw(10) << setfill(' ') << citiesInfo_database[i].city_name << "\t\t"
+                 << left << setw(5) << citiesInfo_database[i].km_from_AA << "\t\t\t  "
+                 << left << setw(10) << citiesInfo_database[i].direction << "\t  "
+                 << citiesInfo_database[i].busDestInfo.bus_dest_cd << "\t  |" << endl;
+    }
+    cout << setw(75) << setfill('_') << "_" << endl;
+        system("pause");
 }
 
-// removing city from lists
+// show buscode, leaving time, and available seat
+void showBusInfo()
+{
+    system("cls");
+    cout << "AS = Available seat \n";
+    cout << "Bus code | Destination | number of buses | "
+         << "Bus 1 AS | Leaving Time | Bus2 AS | Leaving Time \n";
+
+    for (int i = 0; i < busInfo_database.size(); i++)
+    {
+        cout << " " << left << setw(10) << setfill(' ')
+             << busInfo_database[i].bus_dest_cd << "  "
+             << left << setw(10) << citiesInfo_database[i].city_name << "\t\t"
+             << left << setw(10) << 2 << "   ";
+
+        for (int j = 0; j < 2; j++)
+        {
+            cout << left << setw(10) << busInfo_database[i].seatAvailble[j]
+                 << left << setw(10) << busInfo_database[i].leaving_time[j] << "\t";
+        }
+        cout << endl;
+    }
+        system("pause");
+}
+
+// ## administrator functionalites
+void add_city()
+{
+    system("cls");
+    cities_info = new City;
+    cout << "Enter name of new city: ";
+    cin >> cities_info->city_name;
+    cout << "Enter city distance in km from AA: ";
+    cin >> cities_info->km_from_AA;
+    cout << "Enter city direction from AA: ";
+    cin >> cities_info->direction;
+
+    // appending bus information
+    cities_info->busDestInfo = bus_info();
+    citiesInfo_database.push_back(*cities_info);
+        cityNo_count++;
+    cout << "Operation ended successfuly\n";
+
+    delete cities_info; // release a memory;
+        system("pause");
+}
+
 void remove_city()
 {
-
+        system("cls");
     string city_rmv;
     int city_rmv_index;
     bool found_city = false;
@@ -135,7 +211,7 @@ void remove_city()
 
     for (int i = 0; i < cityNo_count; i++)
     {
-        if (city_rmv == cities_info[i]->city_name)
+        if (city_rmv == citiesInfo_database[i].city_name)
         {
             city_rmv_index = i;
             found_city = true;
@@ -144,10 +220,29 @@ void remove_city()
 
     if (found_city)
     {
-        for (int i = city_rmv_index; i < cityNo_count; i++)
-            cities_info[i] = cities_info[i + 1];
-
-        delete cities_info[cityNo_count];
+        // remove city and buses that travels there from the list
+        citiesInfo_database.erase(citiesInfo_database.begin()+city_rmv_index);
+        busInfo_database.erase(busInfo_database.begin()+city_rmv_index);
         cityNo_count--;
     }
+    else 
+        cout << "The city you have entered does not exist \n";
+            system("pause");
+}
+
+//access granting to ticketer by administrator
+void create_ticketer_login()
+{
+        system("cls");
+    login_create = new login;
+    cout << "Enter ticketer ID: ";
+    cin >> login_create->id;
+    cout << "Enter ticketer password: ";
+    cin >> login_create->password;
+    
+    loginInfo_database.push_back(*login_create);
+    num_access++;
+    cout << "Operation ended successfuly \n";\
+    delete login_create; // release a memory;
+        system("pause");
 }
