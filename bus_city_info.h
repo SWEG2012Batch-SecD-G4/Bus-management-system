@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <vector>
 #include <cstdlib>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -41,14 +42,19 @@ vector <login> loginInfo_database;
 int cityNo_count = 0;
 
 // list of initial cities city and km
-vector<string> city ( {"Jimma", "Nakemte", "Bahirdar", "Gambela", "Makelle" });
+vector<string> city ( {"JIMMA", "NAKEMTE", "BAHIRDAR", "GAMBELA", "MAKELLE" });
 vector<float> distance_AA ( {25, 50, 100, 30, 10 });
-vector <string> direction_AA ( {"north", "south", "west", "east", "north" });
+vector <string> direction_AA ( {"NORTH", "SOUTH", "WEST", "EAST", "NORTH" });
 vector <string> l_time ( {"12:00 AM", "6:00 AM", "12:00 PM", "6:00 PM" });
 
 // initial login information for ticketer and administrator
 vector<vector<string> > initial_login{{"admin", "password"}, {"ticketer", "password"}};
-
+// function that converts strings to uppercase
+string convert_toupper(string str)
+{
+        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        return str;
+}
 // ammending bus information
 int number_buses = 10;
 int number_dest = 5;
@@ -88,20 +94,13 @@ void destinationCity()
         citiesInfo_database.push_back(*cities_info);
         cityNo_count++;
 
+        cities_info->city_name = convert_toupper(cities_info->city_name);
+        cities_info->direction = convert_toupper(cities_info->direction);
+
         //release a memory
         delete bus_rg;
         delete cities_info;
     }
-
-    for(int i = 0; i < busInfo_database.size(); i++)
-    {
-        cout << busInfo_database[i].bus_dest_cd << " ";
-        for(int j = 0;  j < 2; j++)
-         cout << busInfo_database[i].bus_cd[j] << " " << busInfo_database[i].leaving_time[j] << " " ;
-        
-        cout << endl;
-    }
-    system("pause");
 }
 
 // shows customer list of cities giving service
@@ -189,6 +188,9 @@ void add_city()
     cout << "Enter city direction from AA: ";
     cin >> cities_info->direction;
 
+        cities_info->city_name = convert_toupper(cities_info->city_name);
+    cities_info->direction = convert_toupper(cities_info->direction);
+
     // appending bus information
     cities_info->busDestInfo = bus_info();
     citiesInfo_database.push_back(*cities_info);
@@ -208,7 +210,8 @@ void remove_city()
 
     cout << "Enter a city Name to be removed: ";
     cin >> city_rmv;
-
+    
+        city_rmv = convert_toupper(city_rmv);
     for (int i = 0; i < cityNo_count; i++)
     {
         if (city_rmv == citiesInfo_database[i].city_name)

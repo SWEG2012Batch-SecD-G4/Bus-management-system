@@ -9,6 +9,7 @@
 #include <cctype>
 #include "bankAccountNumber.h"
 #include "bus_city_info.h"
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -24,11 +25,11 @@ struct reserve
     int ticket_size;
     int return_oneWay;
     float travelling_distance;
-    string resrvd_bus;
-    string leaving_time;
-    bool is_reserverd;
     bool is_prepaid;
     int dest_no, bus_code;
+    int st_cityNO;
+    vector<string> resrvd_bus;
+    vector<string> leaving_time;
 };
 reserve *tempReservtn_store;
 vector<reserve> reserved_acc;
@@ -45,6 +46,10 @@ void receipt(int);
 //global functions
 int first_ui();
 void date_time();
+void write_to_file(vector<reserve>, string);
+void read_from_file();
+reserve parse_account(ifstream &source);
+void sorting_data();
 
 //interface of customer
 int cust_first_ui();
@@ -76,6 +81,7 @@ void generate_report();
 int resrv_counter = 0;
 float total_payement_received = 0;
 int total_reservation = 0;
+
 int main()
 {
     // random_number generator
@@ -182,17 +188,21 @@ int search_destination()
     cout << "Enter name of the city: ";
     string city_name;
     cin >> city_name;
+    city_name = convert_toupper(city_name);
+    cout << "The city name is " << city_name << endl;
 
     int city_index;
     bool found = false;
 
     for (int i = 0; i < cityNo_count; i++)
-        // if the city the customer searches are on the destination name
+    {
+        citiesInfo_database[i].city_name = convert_toupper(citiesInfo_database[i].city_name);
         if (city_name == citiesInfo_database[i].city_name)
         {
-            city_index = i;
             found = true;
+            city_index = i;
         }
+    }
 
     if (found)
     {
@@ -230,6 +240,7 @@ void reserveSeat()
     string fname, lname;
     cin >> fname >> lname;
     tempReservtn_store->fullName = fname + " " + lname;
+    tempReservtn_store->fullName = convert_toupper(tempReservtn_store->fullName);
 
     cout << "Enter your age: ";
     cin >> tempReservtn_store->age;
@@ -240,11 +251,12 @@ void reserveSeat()
     }
 // travelling city information;
 label:
-    cout << "Choose starting Point: ";
+    cout << "Choose starting Point: \n";
     int startingPt = travelling_city() - 1;
-    cout << "Choose Destination City: ";
+    cout << "Choose Destination City: \n";
     int destination = travelling_city() - 1;
     tempReservtn_store->dest_no = destination;
+    tempReservtn_store->st_cityNO = startingPt;
 
     // calculating distance between starting city and destination city;
     // checks whether customer enters the same name at both destination and starting city
@@ -307,8 +319,15 @@ label:
         tempReservtn_store->payement = payement;
 
         //assign buses to the customer
-        tempReservtn_store->resrvd_bus = busInfo_database[destination].bus_cd[l_time_choice];
-        tempReservtn_store->leaving_time = l_time[l_time_choice];
+        tempReservtn_store->resrvd_bus.push_back(busInfo_database[destination].bus_cd[l_time_choice]);
+        tempReservtn_store->leaving_time.push_back(l_time[l_time_choice]);
+
+        if (tempReservtn_store->return_oneWay == 2)
+        {
+            bool return_bus_avbl = bus_assignment(startingPt, resrv_counter, tempReservtn_store, (l_time_choice));
+            tempReservtn_store->resrvd_bus.push_back(busInfo_database[startingPt].bus_cd[l_time_choice]);
+            tempReservtn_store->leaving_time.push_back(l_time[l_time_choice]);
+        }
 
         // confirm payement and reservation;
         confirm_resrv(resrv_counter);
@@ -328,24 +347,37 @@ label:
 
             if (success)
             {
-                busInfo_database[destination].seatAvailble[l_time_choice] -= (tempReservtn_store->ticket_size);
-                tempReservtn_store->resrvd_seat = (100 - busInfo_database[destination].seatAvailble[l_time_choice]);
-                tempReservtn_store->is_reserverd = true;
-                tempReservtn_store->bus_code = l_time_choice;
-
                 // recording payement information
-                busInfo_database[destination].payement[l_time_choice] += payement;
+                // if trip is round trip divide payment between buses
+                if (tempReservtn_store->return_oneWay == 2)
+                {
+                    busInfo_database[startingPt].seatAvailble[l_time_choice] -= (tempReservtn_store->ticket_size);
+                    busInfo_database[destination].seatAvailble[l_time_choice] -= (tempReservtn_store->ticket_size);
+                    busInfo_database[startingPt].payement[l_time_choice] += payement / (2.0);
+                    busInfo_database[destination].payement[l_time_choice] += payement / (2.0);
+                }
+                else
+                {
+                    busInfo_database[destination].seatAvailble[l_time_choice] -= (tempReservtn_store->ticket_size);
+                    busInfo_database[destination].payement[l_time_choice] += payement;
+                }
+
+                tempReservtn_store->resrvd_seat = (100 - busInfo_database[destination].seatAvailble[l_time_choice]);
+                tempReservtn_store->bus_code = l_time_choice;
                 total_payement_received += payement;
-                total_reservation +=tempReservtn_store->ticket_size;
+                total_reservation += (tempReservtn_store->ticket_size * tempReservtn_store->return_oneWay);
 
                 reserved_acc.push_back(*tempReservtn_store);
                 receipt(resrv_counter);
+
+                // write a reservation data to a file
+                write_to_file(reserved_acc, "reservationfile.txt");
                 resrv_counter++;
                 delete tempReservtn_store; // release a memory;
             }
             else
-            { /* if customer does provide accountNumber that does not exist, 
-                    does not have enough balance in the account, and 
+            { /* if customer does provide accountNumber that does not exist,
+                    does not have enough balance in the account, and
                     haven't not provided correct security code, cancel the reservation
                  */
 
@@ -355,10 +387,11 @@ label:
                 system("pause");
             }
         }
-        else{
+        else
+        {
             cout << "Request canceled \n";
-            delete tempReservtn_store; // release a memory; 
-            }
+            delete tempReservtn_store; // release a memory;
+        }
     }
 }
 
@@ -475,11 +508,19 @@ void confirm_resrv(int i)
     system("cls");
     cout << "Confirm Your Reservation\n\n";
     cout << "Name: " << tempReservtn_store->fullName << endl;
-    cout << "Destination: " << tempReservtn_store->destination << endl;
-    cout << "Bus code : " << tempReservtn_store->resrvd_bus << endl;
-    cout << "Leaving time: " << tempReservtn_store->leaving_time << endl;
-    cout << "Distance in km: " << tempReservtn_store->travelling_distance << endl;
-    cout << "Total payment : " << tempReservtn_store->payement << endl;
+    cout << tempReservtn_store->initial_city << " --->" << tempReservtn_store->destination << endl;
+    cout << "Bus code : " << tempReservtn_store->resrvd_bus[0]
+         << " ---- Leaving Time : " << tempReservtn_store->leaving_time[0] << endl;
+
+    if (tempReservtn_store->return_oneWay == 2)
+    {
+        cout << "\n"
+             << tempReservtn_store->destination << " ---> " << tempReservtn_store->initial_city;
+        cout << "\nBus code : " << tempReservtn_store->resrvd_bus[1]
+             << "----- Leaving Time : " << tempReservtn_store->leaving_time[1] << endl;
+    }
+    cout << "Distance in km: " << tempReservtn_store->travelling_distance << "Km" << endl;
+    cout << "Total payment : " << tempReservtn_store->payement << " Birr" << endl;
 }
 
 void date_time()
@@ -507,11 +548,17 @@ void receipt(int pos)
     cout << "\nPrepared for: " << reserved_acc[pos].fullName << endl;
     cout << "Travel Info: From " << reserved_acc[pos].initial_city
          << " TO " << reserved_acc[pos].destination << endl;
-    cout << "Leaving Time: " << reserved_acc[pos].leaving_time << endl;
+    cout << "Trip type: ";
+    if (reserved_acc[pos].return_oneWay == 2)
+        cout << "round trip" << endl;
+    else
+        cout << "One way trip " << endl;
+    cout << "Leaving Time: " << reserved_acc[pos].leaving_time[0] << endl;
     cout << "Date: ";
     date_time();
 
-    cout << endl << endl;
+    cout << endl
+         << endl;
     cout << "Description Quantity price/Quantity Total Price " << endl;
     cout << left << setw(10) << "Transport\t"
          << left << setw(10) << reserved_acc[pos].ticket_size << " "
@@ -527,6 +574,7 @@ void see_reservation()
     string fname, lname, name;
     cin >> fname >> lname;
     name = fname + " " + lname;
+    transform(name.begin(), name.end(), name.begin(), ::toupper);
 
     bool isFound = false;
     int index;
@@ -569,20 +617,34 @@ void cancel_reservation(int cust_index, int i, int j)
     //payback the money
     float payement = reserved_acc[cust_index].payement;
     int number_seats = reserved_acc[cust_index].ticket_size;
+    int k = reserved_acc[cust_index].st_cityNO;
     bool isMoney_back = accountCheck(payement,
                                      reserved_acc[cust_index].accountNumber,
                                      reserved_acc[cust_index].securityNumber,
                                      reserved_acc[cust_index].is_prepaid, false);
 
+    //  rearranging bus seat number and payement;
+    total_payement_received -= payement;
+    if (reserved_acc[cust_index].return_oneWay == 2)
+    {
+        busInfo_database[k].payement[j] -= payement / (2.0);
+        busInfo_database[k].seatAvailble[j] += number_seats;
+        busInfo_database[i].payement[j] -= payement / (2.0);
+        busInfo_database[i].seatAvailble[i] += number_seats;
+    }
+    else
+    {
+        busInfo_database[i].payement[j] -= payement;
+        busInfo_database[i].seatAvailble[j] += number_seats;
+    }
+
     //delete tempReservtn_store[resrv_counter];
     reserved_acc.erase(reserved_acc.begin() + cust_index);
 
-    //  rearranging bus seat number and payement;
-    total_payement_received -= payement;
-    busInfo_database[i].payement[j] -= payement;
-    busInfo_database[i].seatAvailble[j] += number_seats;
-
-    resrv_counter--;
+    // write changes to a file
+                write_to_file(reserved_acc, "reservationfile.txt");
+    resrv_counter -= number_seats;
+    total_reservation -= number_seats;
 }
 
 // modifying reservation
@@ -603,9 +665,10 @@ void modify_reservation(int cust_index)
         case 1:
         {
             cout << "Enter your new name: ";
-            string fname, lname;
+            string fname, lname, fullname;
             cin >> fname >> lname;
             reserved_acc[cust_index].fullName = fname + " " + lname;
+            reserved_acc[cust_index].fullName = convert_toupper(reserved_acc[cust_index].fullName);
             cout << "Name changed successfuly \n";
             break;
         }
@@ -618,7 +681,7 @@ void modify_reservation(int cust_index)
             cin >> l_time_choice;
 
             // Not the best way to do it, but for now
-            reserved_acc[cust_index].leaving_time = l_time[l_time_choice - 1];
+            reserved_acc[cust_index].leaving_time[0] = l_time[l_time_choice - 1];
             cout << "Leaving time is changed successfuly \n";
             break;
         }
@@ -631,6 +694,9 @@ void modify_reservation(int cust_index)
             break;
         }
     }
+
+    // write a modified account to a file
+        write_to_file(reserved_acc, "reservationfile.txt");
 }
 
 // login page for ticketer and administrator
@@ -720,7 +786,6 @@ void respond_ticketer_request(int index)
     }
     else
         cout << "Incorrect login information \n";
-    system("pause");
 }
 
 // administrator first user interfaces
@@ -733,6 +798,8 @@ int administrator_interface()
          << "[3] show all reservations \n"
          << "[4] To Grant a Ticketer priveledges \n"
          << "[5] Mass reservation cancelling \n"
+         << "[6] Generate Report \n"
+         << "[7] Write data to a file \n"
          << "[6] Generate Report \n"
          << "[Press any number] To Go Home Page\n";
 
@@ -770,6 +837,12 @@ void respond_admin_request(int index)
             case 6:
                 generate_report();
                 break;
+            case 7:
+                write_to_file(reserved_acc, "reservationfile.txt");
+                break;
+                        case 8:
+                sorting_data();
+                break;
             default:
                 system("cls");
                 do_not_exit = false;
@@ -793,15 +866,15 @@ void show_all_reservation()
         cout << " " << left << setw(5) << reserved_acc[i].fullName << right << setw(10)
              << reserved_acc[i].initial_city << right << setw(15)
              << reserved_acc[i].destination << right << setw(12)
-             << reserved_acc[i].resrvd_bus << right << setw(10);
+             << reserved_acc[i].resrvd_bus[0] << right << setw(10);
 
-             if(reserved_acc[i].ticket_size > 1)
-                cout << reserved_acc[i].resrvd_seat - reserved_acc[i].ticket_size + 1
-                     << " - " << reserved_acc[i].resrvd_seat << right << setw(17);
-             else
-                cout << reserved_acc[i].resrvd_seat << right << setw(20);
+        if (reserved_acc[i].ticket_size > 1)
+            cout << reserved_acc[i].resrvd_seat - reserved_acc[i].ticket_size + 1
+                 << " - " << reserved_acc[i].resrvd_seat << right << setw(17);
+        else
+            cout << reserved_acc[i].resrvd_seat << right << setw(20);
 
-             cout << reserved_acc[i].leaving_time << right << setw(10)
+        cout << reserved_acc[i].leaving_time[0] << right << setw(10)
              << reserved_acc[i].travelling_distance << right << setw(10)
              << reserved_acc[i].payement << endl;
     }
@@ -847,14 +920,17 @@ void massReservation_cancel(int option, string cancelType)
         switch (option)
         {
         case 1:
+        {
+            cancel_type = convert_toupper(cancel_type);
             if (reserved_acc[i].destination == cancel_type)
             {
                 cancel_reservation(i, reserved_acc[i].dest_no, reserved_acc[i].bus_code);
                 is_canceled = true;
             }
-            break;
+        }
+        break;
         case 2:
-            if (reserved_acc[i].resrvd_bus == cancel_type)
+            if (reserved_acc[i].resrvd_bus[0] == cancel_type)
             {
                 cancel_reservation(i, reserved_acc[i].dest_no, reserved_acc[i].bus_code);
                 is_canceled = true;
@@ -897,4 +973,45 @@ void generate_report()
     cout << "Total reservation made: " << total_reservation << endl;
     cout << "Total Payement Received: " << total_payement_received << endl;
     system("pause");
+}
+
+// file handling functions
+void write_to_file(vector<reserve> reserv_file, string file_name)
+{
+    ofstream fout;
+    fout.open(file_name.c_str(), ios::out);
+
+    // checks wether the file is opened correctly or not.
+    if (!fout)
+    {
+        cout << "File did not opened.\n";
+        exit(0);
+    }
+
+    // write a file to
+    for(int i = 0; i < reserv_file.size(); i++)
+    {
+            fout << left << setw(20) << reserv_file[i].fullName << left << setw(5)
+         << reserv_file[i].accountNumber << "\t\t" << reserv_file[i].initial_city << left << setw(5)
+         << reserv_file[i].destination << "\t\t" << reserv_file[i].travelling_distance << "\t "
+         << reserv_file[i].resrvd_bus[0] << " \t\t" << reserv_file[i].payement << "\t" << reserv_file.size() << endl;
+    }
+    fout.close();
+}
+
+void sorting_data()
+{
+    vector <reserve> sorted_storage;
+    for (int i = 0; i < reserved_acc.size(); i++)
+     for(int j = i+1; j < reserved_acc.size(); j++)
+    {
+        if (reserved_acc[i].payement < reserved_acc[j].payement)
+        {
+            sorted_storage[i] = reserved_acc[i];
+            reserved_acc[i] = reserved_acc[j];
+            reserved_acc[j] = sorted_storage[i];
+        }
+    
+    }
+    
 }
